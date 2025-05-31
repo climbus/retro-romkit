@@ -1,16 +1,13 @@
 package tree
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
+	"tosec-manager/testutils"
 )
 
-func TestDisplay(t *testing.T) {
-	// Create temporary directory structure for testing
-	tmpDir := createTempDir(t)
+func TestWalk(t *testing.T) {
+	tmpDir := testutils.CreateTempDir(t)
 
-	// Create test structure
 	testFiles := []string{
 		"file1.txt",
 		"file2.jpg",
@@ -20,90 +17,87 @@ func TestDisplay(t *testing.T) {
 		"subdir/nested/file5.txt",
 	}
 
-	createTestFiles(t, testFiles, tmpDir)
+	testutils.CreateTestFiles(t, testFiles, tmpDir)
 
 	tests := []struct {
-		name      string
-		path      string
-		filetypes []string
-		wantError bool
+		name          string
+		filetypes     []string
+		expectedFiles []string
+		wantError     bool
 	}{
 		{
-			name:      "valid directory without filter",
-			path:      tmpDir,
-			filetypes: []string{},
-			wantError: false,
+			name:          "no filter - show all files",
+			filetypes:     []string{},
+			expectedFiles: []string{"README.md", "file1.txt", "file2.jpg", "subdir", "file3.txt", "file4.png", "nested", "file5.txt"},
 		},
 		{
-			name:      "valid directory with single extension filter",
-			path:      tmpDir,
-			filetypes: []string{".txt"},
-			wantError: false,
+			name:          "filter txt files only",
+			filetypes:     []string{".txt"},
+			expectedFiles: []string{"file1.txt", "subdir", "file3.txt", "nested", "file5.txt"},
 		},
 		{
-			name:      "valid directory with multiple extension filter",
-			path:      tmpDir,
-			filetypes: []string{".jpg", ".png"},
-			wantError: false,
+			name:          "filter jpg and png files",
+			filetypes:     []string{".jpg", ".png"},
+			expectedFiles: []string{"file2.jpg", "subdir", "file4.png", "nested"},
 		},
 		{
-			name:      "valid directory with non-matching filter",
-			path:      tmpDir,
-			filetypes: []string{".pdf", ".doc"},
-			wantError: false,
+			name:          "filter non-existent extension - show only dirs",
+			filetypes:     []string{".pdf"},
+			expectedFiles: []string{"subdir", "nested"},
 		},
 		{
-			name:      "valid directory with full filename filter",
-			path:      tmpDir,
-			filetypes: []string{"README.md"},
-			wantError: false,
-		},
-		{
-			name:      "non-existent directory",
-			path:      "/non/existent/path/that/definitely/does/not/exist",
-			filetypes: []string{},
-			wantError: true,
-		},
-		{
-			name:      "invalid path with null bytes",
-			path:      "/tmp/test\x00invalid",
-			filetypes: []string{},
-			wantError: true,
+			name:          "filter by full filename",
+			filetypes:     []string{"README.md"},
+			expectedFiles: []string{"README.md", "subdir", "nested"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := Display(tt.path, tt.filetypes)
-			if (err != nil) != tt.wantError {
-				t.Errorf("Display() error = %v, wantError %v", err, tt.wantError)
+			entries := make(chan Entry, 100)
+			
+			go func() {
+				err := Walk(tmpDir, tt.filetypes, entries)
+				if tt.wantError && err == nil {
+					t.Errorf("Expected error but got none")
+				}
+				if !tt.wantError && err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+			}()
+			
+			var foundFiles []string
+			for entry := range entries {
+				foundFiles = append(foundFiles, entry.Name)
+			}
+			
+			// Check that all expected files are found
+			for _, expectedFile := range tt.expectedFiles {
+				found := false
+				for _, foundFile := range foundFiles {
+					if foundFile == expectedFile {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("Expected file %q not found in results: %v", expectedFile, foundFiles)
+				}
 			}
 		})
 	}
-}
 
-func createTestFiles(t *testing.T, testFiles []string, tmpDir string) {
-	for _, file := range testFiles {
-		fullPath := filepath.Join(tmpDir, file)
-		err := os.MkdirAll(filepath.Dir(fullPath), 0755)
-		if err != nil {
-			t.Fatalf("Failed to create dir for %s: %v", file, err)
+	// Test error case
+	t.Run("non-existent directory", func(t *testing.T) {
+		entries := make(chan Entry, 100)
+		
+		err := Walk("/non/existent/path", []string{}, entries)
+		if err == nil {
+			t.Error("Expected error for non-existent directory")
 		}
-
-		f, err := os.Create(fullPath)
-		if err != nil {
-			t.Fatalf("Failed to create file %s: %v", file, err)
+		
+		// Drain channel
+		for range entries {
 		}
-		f.Close()
-	}
+	})
 }
-
-func createTempDir(t *testing.T) string {
-	tmpDir, err := os.MkdirTemp("", "tree_test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
-	return tmpDir
-}
-

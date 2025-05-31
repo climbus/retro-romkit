@@ -16,7 +16,6 @@ Available commands:
     help		Show this help message`)
 }
 
-
 func main() {
 	if len(os.Args) == 1 {
 		printUsage()
@@ -30,10 +29,10 @@ func main() {
 			return
 		}
 		path := os.Args[2]
-		err := tosec.ShowFileTree(path)
-		if err != nil {
-			fmt.Printf("Error showing file tree: %v\n", err)
-			return
+
+		lines := tosec.FormatTree(path)
+		for line := range lines {
+			fmt.Println(line)
 		}
 	case "help":
 		printUsage()
