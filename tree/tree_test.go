@@ -1,6 +1,7 @@
 package tree
 
 import (
+	"reflect"
 	"testing"
 	"tosec-manager/testutils"
 )
@@ -9,6 +10,7 @@ func TestWalk(t *testing.T) {
 	tmpDir := testutils.CreateTempDir(t)
 
 	testFiles := []string{
+		".git/config",
 		"file1.txt",
 		"file2.jpg",
 		"README.md",
@@ -55,7 +57,7 @@ func TestWalk(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			entries := make(chan Entry, 100)
-			
+
 			go func() {
 				err := Walk(tmpDir, tt.filetypes, entries)
 				if tt.wantError && err == nil {
@@ -65,24 +67,15 @@ func TestWalk(t *testing.T) {
 					t.Errorf("Unexpected error: %v", err)
 				}
 			}()
-			
+
 			var foundFiles []string
 			for entry := range entries {
 				foundFiles = append(foundFiles, entry.Name)
 			}
-			
-			// Check that all expected files are found
-			for _, expectedFile := range tt.expectedFiles {
-				found := false
-				for _, foundFile := range foundFiles {
-					if foundFile == expectedFile {
-						found = true
-						break
-					}
-				}
-				if !found {
-					t.Errorf("Expected file %q not found in results: %v", expectedFile, foundFiles)
-				}
+
+			equals := reflect.DeepEqual(foundFiles, tt.expectedFiles)
+			if !equals {
+				t.Errorf("Expected files %v, but got %v", tt.expectedFiles, foundFiles)
 			}
 		})
 	}
@@ -90,14 +83,15 @@ func TestWalk(t *testing.T) {
 	// Test error case
 	t.Run("non-existent directory", func(t *testing.T) {
 		entries := make(chan Entry, 100)
-		
+
 		err := Walk("/non/existent/path", []string{}, entries)
 		if err == nil {
 			t.Error("Expected error for non-existent directory")
 		}
-		
+
 		// Drain channel
 		for range entries {
 		}
 	})
 }
+

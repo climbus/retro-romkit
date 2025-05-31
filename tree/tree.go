@@ -28,16 +28,20 @@ func hasOneOfFileTypes(file string, filetypes []string) bool {
 // Walk traverses the directory tree and sends entries to the provided channel
 func Walk(path string, filetypes []string, entries chan<- Entry) error {
 	defer close(entries)
-	
+
 	err := filepath.WalkDir(path, func(file string, info os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
+		if strings.Contains(file, string(os.PathSeparator)+".") || strings.HasPrefix(file, ".") {
+			return nil // Skip hidden files and directories
+		}
+		if file == path {
+			return nil // Skip the root directory itself
+		}
+
 		if !hasOneOfFileTypes(file, filetypes) && !info.IsDir() {
 			return nil // Skip files that don't match the specified file types
-		}
-		if path == file {
-			return nil // Skip the root directory itself
 		}
 
 		relFilename, err := filepath.Rel(path, file)
@@ -58,4 +62,3 @@ func Walk(path string, filetypes []string, entries chan<- Entry) error {
 
 	return err
 }
-
