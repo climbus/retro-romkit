@@ -1,3 +1,4 @@
+// Package tree provides directory traversal functionality with filtering capabilities.
 package tree
 
 import (

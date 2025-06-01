@@ -1,3 +1,4 @@
+// Package testutils provides utility functions for creating test files and directories.
 package testutils
 
 import (

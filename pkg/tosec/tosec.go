@@ -1,3 +1,4 @@
+// Package tosec provides functionality for analyzing and displaying file trees and statistics.
 package tosec
 
 import (
@@ -8,14 +9,18 @@ import (
 )
 
 // GetFileTree returns a channel of tree entries for the given path
-func GetFileTree(path string) <-chan tree.Entry {
+func GetFileTree(path string) (<-chan tree.Entry, <-chan error) {
 	entries := make(chan tree.Entry, 100)
+	errCh := make(chan error, 1)
 
 	go func() {
-		tree.Walk(path, []string{}, entries)
+		defer close(errCh)
+		if err := tree.Walk(path, []string{}, entries); err != nil {
+			errCh <- err
+		}
 	}()
 
-	return entries
+	return entries, errCh
 }
 
 // FormatTree returns a channel of formatted text lines for the tree
@@ -27,7 +32,7 @@ func FormatTree(path string) <-chan string {
 
 		lines <- fmt.Sprintf("Showing file tree for: %s", path)
 
-		entries := GetFileTree(path)
+		entries, errCh := GetFileTree(path)
 		for entry := range entries {
 			depthLabel := strings.Repeat("  ", entry.Depth)
 			name := entry.Name
@@ -35,6 +40,16 @@ func FormatTree(path string) <-chan string {
 				name += "/"
 			}
 			lines <- depthLabel + name
+		}
+		
+		// Check for errors after processing entries
+		select {
+		case err := <-errCh:
+			if err != nil {
+				lines <- fmt.Sprintf("Error: %v", err)
+			}
+		default:
+			// No error
 		}
 	}()
 
@@ -54,7 +69,7 @@ func GetStats(path string) (Stats, error) {
 	}
 	stats.DirectoryCounts["/"] = 0 // Initialize root directory count
 
-	entries := GetFileTree(path)
+	entries, errCh := GetFileTree(path)
 	for entry := range entries {
 		if entry.IsDir {
 			stats.DirectoryCounts[entry.Name] = 0
@@ -66,6 +81,16 @@ func GetStats(path string) (Stats, error) {
 				stats.DirectoryCounts["/"]++ // Root directory
 			}
 		}
+	}
+
+	// Check for errors after processing entries
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return stats, err
+		}
+	default:
+		// No error
 	}
 
 	return stats, nil
