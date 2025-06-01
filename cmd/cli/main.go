@@ -15,6 +15,7 @@ func printUsage() {
 Available commands:
 
     show <path>		Show file tree of the specified path
+    stats <path>	Show statistics about files in the specified path
     help		Show this help message`)
 }
 
