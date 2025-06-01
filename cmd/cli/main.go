@@ -6,7 +6,7 @@ import (
 	"os"
 	"slices"
 
-	"tosec-manager/tosec"
+	"tosec-manager/pkg/tosec"
 )
 
 func printUsage() {
