@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"tosec-manager/tree"
+	"tosec-manager/internal/tree"
 )
 
 // GetFileTree returns a channel of tree entries for the given path
