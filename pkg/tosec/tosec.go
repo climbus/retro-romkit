@@ -48,7 +48,10 @@ type Stats struct {
 
 // GetStats returns statistics about the files in the given path
 func GetStats(path string) (Stats, error) {
-	stats := Stats{0, make(map[string]int)}
+	stats := Stats{
+		TotalFiles:      0,
+		DirectoryCounts: make(map[string]int),
+	}
 	stats.DirectoryCounts["/"] = 0 // Initialize root directory count
 
 	entries := GetFileTree(path)
