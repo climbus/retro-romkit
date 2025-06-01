@@ -8,9 +8,10 @@ import (
 
 // Entry represents a single tree entry
 type Entry struct {
-	Name  string
-	Depth int
-	IsDir bool
+	Name   string
+	Depth  int
+	IsDir  bool
+	Folder string
 }
 
 func hasOneOfFileTypes(file string, filetypes []string) bool {
@@ -50,11 +51,13 @@ func Walk(path string, filetypes []string, entries chan<- Entry) error {
 		}
 		depth := len(strings.Split(relFilename, string(os.PathSeparator))) - 1
 		name := filepath.Base(relFilename)
+		folder := filepath.Dir(relFilename)
 
 		entries <- Entry{
-			Name:  name,
-			Depth: depth,
-			IsDir: info.IsDir(),
+			Name:   name,
+			Depth:  depth,
+			IsDir:  info.IsDir(),
+			Folder: folder,
 		}
 
 		return nil

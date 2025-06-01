@@ -27,6 +27,5 @@ func CreateTempDir(t *testing.T) string {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
 	return tmpDir
 }
