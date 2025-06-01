@@ -27,22 +27,15 @@ func main() {
 
 	switch os.Args[1] {
 	case "show":
-		if len(os.Args) < 3 {
-			fmt.Println("Error: 'show' command requires a path argument.")
-			return
-		}
-		path := os.Args[2]
+		path := getPath()
 
 		lines := tosec.FormatTree(path)
 		for line := range lines {
 			fmt.Println(line)
 		}
 	case "stats":
-		if len(os.Args) < 3 {
-			fmt.Println("Error: 'stats' command requires a path argument.")
-			return
-		}
-		path := os.Args[2]
+		path := getPath()
+
 		stats, err := tosec.GetStats(path)
 
 		if err != nil {
@@ -59,4 +52,14 @@ func main() {
 		fmt.Printf("Unknown command: %s\n\n", os.Args[1])
 		printUsage()
 	}
+}
+
+func getPath() string {
+	if len(os.Args) < 3 {
+		fmt.Println("Error: '" + os.Args[1] + "' command requires a path argument.\n")
+		printUsage()
+		os.Exit(1)
+	}
+	path := os.Args[2]
+	return path
 }
