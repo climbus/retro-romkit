@@ -111,6 +111,7 @@ func (t *Tosec) GetStats() (Stats, error) {
 	entries, errCh := t.GetFileTree()
 	for entry := range entries {
 		if entry.IsDir {
+			fmt.Println(entry.Folder) // Debugging output
 			stats.DirectoryCounts[entry.Name] = 0
 		} else {
 			stats.TotalFiles++

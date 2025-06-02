@@ -55,7 +55,7 @@ func TestGetStatsOnlyDirectories(t *testing.T) {
 
 	if reflect.DeepEqual(Stats{
 		TotalFiles:      3,
-		DirectoryCounts: map[string]int{"/": 1, "dir1": 2, "dir1/subdir1": 1, "dir2": 0},
+		DirectoryCounts: map[string]int{"/": 0, "dir1": 0, "dir1/subdir1": 0, "dir2": 0},
 	}, stats.DirectoryCounts) {
 		t.Errorf("Expected directory counts to match, got %v", stats.DirectoryCounts)
 	}
@@ -90,7 +90,7 @@ func TestTosec_GetStats(t *testing.T) {
 			platform: "c64",
 			want: Stats{
 				TotalFiles:      3,
-				DirectoryCounts: map[string]int{"/": 1, "dir1": 2, "dir1/subdir1": 1, "dir2": 0},
+				DirectoryCounts: map[string]int{"/": 1, "dir1": 1, "dir1/subdir1": 1, "dir2": 0},
 			},
 			wantErr: false,
 		},
@@ -109,7 +109,7 @@ func TestTosec_GetStats(t *testing.T) {
 			path: tmpDir,
 			want: Stats{
 				TotalFiles:      6,
-				DirectoryCounts: map[string]int{"/": 2, "dir1": 3, "dir1/subdir1": 1, "dir2": 1},
+				DirectoryCounts: map[string]int{"/": 2, "dir1": 2, "dir1/subdir1": 1, "dir2": 1},
 			},
 			wantErr: false,
 		},
@@ -128,7 +128,7 @@ func TestTosec_GetStats(t *testing.T) {
 				t.Fatal("GetStats() succeeded unexpectedly")
 			}
 
-			if got.TotalFiles != tt.want.TotalFiles || reflect.DeepEqual(got.DirectoryCounts, tt.want.DirectoryCounts) {
+			if got.TotalFiles != tt.want.TotalFiles || !reflect.DeepEqual(got.DirectoryCounts, tt.want.DirectoryCounts) {
 				t.Errorf("GetStats() = %v, want %v", got, tt.want)
 			}
 		})

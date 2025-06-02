@@ -51,7 +51,13 @@ func Walk(path string, filetypes []string, entries chan<- Entry) error {
 			return err
 		}
 		depth := len(strings.Split(relFilename, string(os.PathSeparator))) - 1
-		name := filepath.Base(relFilename)
+
+		var name string
+		if info.IsDir() {
+			name = relFilename
+		} else {
+			name = filepath.Base(relFilename)
+		}
 		folder := filepath.Dir(relFilename)
 
 		entries <- Entry{

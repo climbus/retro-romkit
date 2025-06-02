@@ -30,27 +30,27 @@ func TestWalk(t *testing.T) {
 		{
 			name:          "no filter - show all files",
 			filetypes:     []string{},
-			expectedFiles: []string{"README.md", "file1.txt", "file2.jpg", "subdir", "file3.txt", "file4.png", "nested", "file5.txt"},
+			expectedFiles: []string{"README.md", "file1.txt", "file2.jpg", "subdir", "file3.txt", "file4.png", "subdir/nested", "file5.txt"},
 		},
 		{
 			name:          "filter txt files only",
 			filetypes:     []string{".txt"},
-			expectedFiles: []string{"file1.txt", "subdir", "file3.txt", "nested", "file5.txt"},
+			expectedFiles: []string{"file1.txt", "subdir", "file3.txt", "subdir/nested", "file5.txt"},
 		},
 		{
 			name:          "filter jpg and png files",
 			filetypes:     []string{".jpg", ".png"},
-			expectedFiles: []string{"file2.jpg", "subdir", "file4.png", "nested"},
+			expectedFiles: []string{"file2.jpg", "subdir", "file4.png", "subdir/nested"},
 		},
 		{
 			name:          "filter non-existent extension - show only dirs",
 			filetypes:     []string{".pdf"},
-			expectedFiles: []string{"subdir", "nested"},
+			expectedFiles: []string{"subdir", "subdir/nested"},
 		},
 		{
 			name:          "filter by full filename",
 			filetypes:     []string{"README.md"},
-			expectedFiles: []string{"README.md", "subdir", "nested"},
+			expectedFiles: []string{"README.md", "subdir", "subdir/nested"},
 		},
 	}
 
@@ -94,4 +94,3 @@ func TestWalk(t *testing.T) {
 		}
 	})
 }
-
