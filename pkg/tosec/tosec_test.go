@@ -63,9 +63,7 @@ func TestGetStatsEmptyDirectory(t *testing.T) {
 	tmpDir := testutils.CreateTempDir(t)
 	defer os.RemoveAll(tmpDir)
 
-	tosecFolder := Tosec{
-		Path: tmpDir,
-	}
+	tosecFolder := Create(tmpDir, "")
 
 	stats, err := tosecFolder.GetStats()
 	if err != nil {
@@ -94,9 +92,7 @@ func TestGetStatsOnlyDirectories(t *testing.T) {
 		t.Fatalf("Failed to create dir2/subdir1: %v", err)
 	}
 
-	tosecFolder := Tosec{
-		Path: tmpDir,
-	}
+	tosecFolder := Create(tmpDir, "")
 
 	stats, err := tosecFolder.GetStats()
 	if err != nil {

@@ -33,7 +33,7 @@ func main() {
 		platform := flag.StringP("platform", "p", "", "Platform to filter by (optional)")
 		flag.Parse()
 
-		tosecFolder := tosec.NewTosec(path, *platform)
+		tosecFolder := tosec.Create(path, *platform)
 
 		lines := tosecFolder.FormatTree()
 		for line := range lines {
@@ -45,7 +45,7 @@ func main() {
 		platform := flag.StringP("platform", "p", "", "Platform to filter by (optional)")
 		flag.Parse()
 
-		tosecFolder := tosec.NewTosec(path, *platform)
+		tosecFolder := tosec.Create(path, *platform)
 
 		stats, err := tosecFolder.GetStats()
 

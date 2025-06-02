@@ -14,7 +14,7 @@ type Tosec struct {
 	FileTypes []string
 }
 
-func NewTosec(path, platform string) *Tosec {
+func Create(path, platform string) *Tosec {
 	platforms := map[string][]string{
 		"amiga":   {"adf", "dms", "ipf", "lha", "lzx"},
 		"atari":   {"st", "msa", "zip"},
