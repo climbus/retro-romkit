@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	flag "github.com/spf13/pflag"
 	"maps"
 	"os"
 	"slices"
@@ -29,14 +30,24 @@ func main() {
 	case "show":
 		path := getPath()
 
-		lines := tosec.FormatTree(path)
+		platform := flag.StringP("platform", "p", "", "Platform to filter by (optional)")
+		flag.Parse()
+
+		tosecFolder := tosec.NewTosec(path, *platform)
+
+		lines := tosecFolder.FormatTree()
 		for line := range lines {
 			fmt.Println(line)
 		}
 	case "stats":
 		path := getPath()
 
-		stats, err := tosec.GetStats(path)
+		platform := flag.StringP("platform", "p", "", "Platform to filter by (optional)")
+		flag.Parse()
+
+		tosecFolder := tosec.NewTosec(path, *platform)
+
+		stats, err := tosecFolder.GetStats()
 
 		if err != nil {
 			fmt.Printf("Error retrieving stats: %v\n", err)
@@ -62,4 +73,8 @@ func getPath() string {
 	}
 	path := os.Args[2]
 	return path
+}
+
+type Options struct {
+	Platform string
 }
