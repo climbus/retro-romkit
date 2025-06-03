@@ -134,3 +134,82 @@ func TestTosec_GetStats(t *testing.T) {
 		})
 	}
 }
+
+func TestParseFileName(t *testing.T) {
+	tests := []struct {
+		name     string
+		fileName string
+		want     *TosecFile
+		wantErr  bool
+	}{
+		{
+			"Test standad filename",
+			"Zynaps (1987)(Hewson Consultants).zip",
+			&TosecFile{
+				FileName:  "Zynaps (1987)(Hewson Consultants).zip",
+				Title:     "Zynaps",
+				Date:      "1987",
+				Publisher: "Hewson Consultants",
+				Region:    "",
+				Language:  "",
+				Format:    "zip",
+				Flags:     []string{},
+			},
+			false,
+		},
+		{
+			"Test filename with region and language",
+			"Zynaps (1987)(Hewson Consultants)(Europe)(en).zip",
+			&TosecFile{
+				FileName:  "Zynaps (1987)(Hewson Consultants)(Europe)(en).zip",
+				Title:     "Zynaps",
+				Date:      "1987",
+				Publisher: "Hewson Consultants",
+				Region:    "Europe",
+				Language:  "en",
+				Format:    "zip",
+				Flags:     []string{},
+			},
+			false,
+		},
+		{
+			"Test filename with flags",
+			"Zynaps (1987)(Hewson Consultants)[a][Aka kota].zip",
+			&TosecFile{
+				FileName:  "Zynaps (1987)(Hewson Consultants)[a][Aka kota].zip",
+				Title:     "Zynaps",
+				Date:      "1987",
+				Publisher: "Hewson Consultants",
+				Format:    "zip",
+				Flags:     []string{"a", "Aka kota"},
+			},
+			false,
+		},
+		{
+			"Test bad filename",
+			"InvalidFileName.txt",
+			nil,
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			got, gotErr := ParseFileName(tt.fileName)
+
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("ParseFileName() failed: %v", gotErr)
+				}
+				return
+			}
+			if tt.wantErr {
+				t.Fatal("ParseFileName() succeeded unexpectedly")
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ParseFileName() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

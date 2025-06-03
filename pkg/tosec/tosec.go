@@ -2,19 +2,99 @@
 package tosec
 
 import (
+	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"tosec-manager/internal/tree"
 )
 
-type Tosec struct {
+const REGEX_MAIN_DATA = `^(.*?) \((.*?)\)\((.*?)\).*\.(.*)$`
+const REGEX_FLAG = `\[(.*?)\]`
+const REGEX_OPTION = `\((.*?)\)`
+const REGEX_LANGUAGE = `^` + LANGUAGE_NAMES + `(-` + LANGUAGE_NAMES + `)?$`
+
+const REGEX_REGION = `(Japan|USA|Europe|World|International|Asia|Australia|Brazil|China|Korea|Taiwan)`
+const LANGUAGE_NAMES = `(en|fr|de|es|it|ja|zh|ko|pt|ru|nl|pl|sv|no|da|fi|tr|ar|he|hi|th|vi|id|ms|cs|hu|ro|bg|el|uk|hr|sk|sl|lt|lv|et|fa|ur)`
+
+type TosecFolder struct {
 	Path      string
 	Platform  string
 	FileTypes []string
 }
 
-func Create(path, platform string) *Tosec {
+type TosecFile struct {
+	FileName  string
+	Title     string
+	Date      string
+	Publisher string
+	Platform  string
+	Format    string
+	Flags     []string
+	Region    string
+	Language  string
+}
+
+func ParseFileName(fileName string) (*TosecFile, error) {
+	// TODO: Move compiled regex to package level variable
+	re := regexp.MustCompile(REGEX_MAIN_DATA)
+	re_flags := regexp.MustCompile(REGEX_FLAG)
+	re_options := regexp.MustCompile(REGEX_OPTION)
+
+	matches := re.FindStringSubmatch(fileName)
+	if matches == nil {
+		return nil, errors.New("invalid file name format")
+	}
+	tf := &TosecFile{
+		FileName:  fileName,
+		Title:     strings.TrimSpace(matches[1]),
+		Date:      strings.TrimSpace(matches[2]),
+		Publisher: strings.TrimSpace(matches[3]),
+		Format:    strings.TrimSpace(matches[4]),
+	}
+
+	rest := tf.extractRestPartOfName()
+
+	flags_res := re_flags.FindAllStringSubmatch(rest, -1)
+	flags := extractValues(flags_res)
+	tf.Flags = flags
+
+	options_res := re_options.FindAllStringSubmatch(rest, -1)
+	options := extractValues(options_res)
+
+	for _, opt := range options {
+		opt = strings.TrimSpace(opt)
+		if tf.Region == "" && regexp.MustCompile(REGEX_REGION).MatchString(opt) {
+			tf.Region = opt
+		} else if tf.Language == "" && regexp.MustCompile(REGEX_LANGUAGE).MatchString(opt) {
+			tf.Language = opt
+		}
+	}
+
+	// fmt.Println("Rest of the file name:", rest)
+	// fmt.Println("Options", options)
+	return tf, nil
+}
+
+func (tf *TosecFile) extractRestPartOfName() string {
+	publisherStr := fmt.Sprintf("(%s)", tf.Publisher)
+	idx := strings.LastIndex(tf.FileName, publisherStr)
+	rest := tf.FileName[idx+len(publisherStr) : len(tf.FileName)-len(tf.Format)-1]
+	return rest
+}
+
+func extractValues(elements [][]string) []string {
+	values := make([]string, 0)
+	if elements != nil {
+		for _, val := range elements {
+			values = append(values, strings.TrimSpace(val[1]))
+		}
+	}
+	return values
+}
+
+func Create(path, platform string) *TosecFolder {
 	platforms := map[string][]string{
 		"amiga":   {"adf", "dms", "ipf", "lha", "lzx"},
 		"atari":   {"st", "msa", "zip"},
@@ -28,14 +108,14 @@ func Create(path, platform string) *Tosec {
 		"golang":  {"go"},
 	}
 
-	return &Tosec{
+	return &TosecFolder{
 		Path:      path,
 		Platform:  platform,
 		FileTypes: platforms[platform],
 	}
 }
 
-func (t *Tosec) FileTypesWithArchives() []string {
+func (t *TosecFolder) FileTypesWithArchives() []string {
 	if len(t.FileTypes) == 0 {
 		return t.FileTypes
 	}
@@ -48,7 +128,7 @@ func (t *Tosec) FileTypesWithArchives() []string {
 }
 
 // GetFileTree returns a channel of tree entries for the given path
-func (tosecFolder *Tosec) GetFileTree() (<-chan tree.Entry, <-chan error) {
+func (tosecFolder *TosecFolder) GetFileTree() (<-chan tree.Entry, <-chan error) {
 	entries := make(chan tree.Entry, 100)
 	errCh := make(chan error, 1)
 
@@ -62,8 +142,34 @@ func (tosecFolder *Tosec) GetFileTree() (<-chan tree.Entry, <-chan error) {
 	return entries, errCh
 }
 
+func (t *TosecFolder) GetFiles() ([]TosecFile, error) {
+	entries, errCh := t.GetFileTree()
+	var fileList []TosecFile
+
+	for entry := range entries {
+		if !entry.IsDir {
+			tf, err := ParseFileName(entry.Name)
+			if err != nil {
+				fmt.Println("error parsing file name: " + entry.Name + " Error: " + err.Error())
+				continue
+			}
+			fileList = append(fileList, *tf)
+		}
+	}
+
+	// Check for errors after processing entries
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return fileList, nil
+}
+
 // FormatTree returns a channel of formatted text lines for the tree
-func (t *Tosec) FormatTree() <-chan string {
+func (t *TosecFolder) FormatTree() <-chan string {
 	lines := make(chan string, 100)
 
 	go func() {
@@ -101,7 +207,7 @@ type Stats struct {
 }
 
 // GetStats returns statistics about the files in the given path
-func (t *Tosec) GetStats() (Stats, error) {
+func (t *TosecFolder) GetStats() (Stats, error) {
 	stats := Stats{
 		TotalFiles:      0,
 		DirectoryCounts: make(map[string]int),
@@ -111,7 +217,6 @@ func (t *Tosec) GetStats() (Stats, error) {
 	entries, errCh := t.GetFileTree()
 	for entry := range entries {
 		if entry.IsDir {
-			fmt.Println(entry.Folder) // Debugging output
 			stats.DirectoryCounts[entry.Name] = 0
 		} else {
 			stats.TotalFiles++

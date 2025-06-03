@@ -57,6 +57,18 @@ func main() {
 		for _, key := range slices.Sorted(maps.Keys(stats.DirectoryCounts)) {
 			fmt.Printf("%s (%d)\n", key, stats.DirectoryCounts[key])
 		}
+	case "list":
+		path := getPath()
+		tosecFolder := tosec.Create(path, "")
+
+		files, err := tosecFolder.GetFiles()
+		if err != nil {
+			fmt.Printf("Error retrieving files: %v\n", err)
+			return
+		}
+		for _, file := range files {
+			fmt.Printf("%s (%s) - %s - r:%s l:%s : %s\n", file.Title, file.Date, file.Publisher, file.Region, file.Language, file.FileName)
+		}
 	case "help":
 		printUsage()
 	default:
