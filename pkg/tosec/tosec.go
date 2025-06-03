@@ -36,7 +36,14 @@ type TosecFile struct {
 	Language  string
 }
 
+type Stats struct {
+	TotalFiles      int
+	DirectoryCounts map[string]int
+}
+
+// ParseFileName parses a file name according to the TOSEC naming convention
 func ParseFileName(fileName string) (*TosecFile, error) {
+
 	// TODO: Move compiled regex to package level variable
 	re := regexp.MustCompile(REGEX_MAIN_DATA)
 	re_flags := regexp.MustCompile(REGEX_FLAG)
@@ -77,24 +84,10 @@ func ParseFileName(fileName string) (*TosecFile, error) {
 	return tf, nil
 }
 
-func (tf *TosecFile) extractRestPartOfName() string {
-	publisherStr := fmt.Sprintf("(%s)", tf.Publisher)
-	idx := strings.LastIndex(tf.FileName, publisherStr)
-	rest := tf.FileName[idx+len(publisherStr) : len(tf.FileName)-len(tf.Format)-1]
-	return rest
-}
-
-func extractValues(elements [][]string) []string {
-	values := make([]string, 0)
-	if elements != nil {
-		for _, val := range elements {
-			values = append(values, strings.TrimSpace(val[1]))
-		}
-	}
-	return values
-}
-
+// Create initializes a TosecFolder with the given path and platform.
 func Create(path, platform string) *TosecFolder {
+
+	// TODO: Move platform list to a package-level variable or config
 	platforms := map[string][]string{
 		"amiga":   {"adf", "dms", "ipf", "lha", "lzx"},
 		"atari":   {"st", "msa", "zip"},
@@ -115,18 +108,6 @@ func Create(path, platform string) *TosecFolder {
 	}
 }
 
-func (t *TosecFolder) FileTypesWithArchives() []string {
-	if len(t.FileTypes) == 0 {
-		return t.FileTypes
-	}
-	// Add common archive formats to the file types
-	archiveTypes := []string{"zip", "rar", "7z", "tar", "gz", "bz2"}
-	fileTypes := make([]string, len(t.FileTypes)+len(archiveTypes))
-	copy(fileTypes, t.FileTypes)
-	copy(fileTypes[len(t.FileTypes):], archiveTypes)
-	return fileTypes
-}
-
 // GetFileTree returns a channel of tree entries for the given path
 func (tosecFolder *TosecFolder) GetFileTree() (<-chan tree.Entry, <-chan error) {
 	entries := make(chan tree.Entry, 100)
@@ -134,7 +115,7 @@ func (tosecFolder *TosecFolder) GetFileTree() (<-chan tree.Entry, <-chan error) 
 
 	go func() {
 		defer close(errCh)
-		if err := tree.Walk(tosecFolder.Path, tosecFolder.FileTypesWithArchives(), entries); err != nil {
+		if err := tree.Walk(tosecFolder.Path, tosecFolder.fileTypesWithArchives(), entries); err != nil {
 			errCh <- err
 		}
 	}()
@@ -142,6 +123,7 @@ func (tosecFolder *TosecFolder) GetFileTree() (<-chan tree.Entry, <-chan error) 
 	return entries, errCh
 }
 
+// GetFiles returns a slice of TosecFile objects parsed from the file names in the folder
 func (t *TosecFolder) GetFiles() ([]TosecFile, error) {
 	entries, errCh := t.GetFileTree()
 	var fileList []TosecFile
@@ -158,6 +140,7 @@ func (t *TosecFolder) GetFiles() ([]TosecFile, error) {
 	}
 
 	// Check for errors after processing entries
+	// TODO: Check if it's necessary to wait for the error channel
 	select {
 	case err := <-errCh:
 		if err != nil {
@@ -193,17 +176,10 @@ func (t *TosecFolder) FormatTree() <-chan string {
 			if err != nil {
 				lines <- fmt.Sprintf("Error: %v", err)
 			}
-		default:
-			// No error
 		}
 	}()
 
 	return lines
-}
-
-type Stats struct {
-	TotalFiles      int
-	DirectoryCounts map[string]int
 }
 
 // GetStats returns statistics about the files in the given path
@@ -234,9 +210,37 @@ func (t *TosecFolder) GetStats() (Stats, error) {
 		if err != nil {
 			return stats, err
 		}
-	default:
-		// No error
 	}
 
 	return stats, nil
+}
+
+func (tf *TosecFile) extractRestPartOfName() string {
+	publisherStr := fmt.Sprintf("(%s)", tf.Publisher)
+	idx := strings.LastIndex(tf.FileName, publisherStr)
+	rest := tf.FileName[idx+len(publisherStr) : len(tf.FileName)-len(tf.Format)-1]
+	return rest
+}
+
+func extractValues(elements [][]string) []string {
+	values := make([]string, 0)
+	if elements != nil {
+		for _, val := range elements {
+			values = append(values, strings.TrimSpace(val[1]))
+		}
+	}
+	return values
+}
+
+func (t *TosecFolder) fileTypesWithArchives() []string {
+	if len(t.FileTypes) == 0 {
+		return t.FileTypes
+	}
+	// Add common archive formats to the file types
+	// TODO: Consider making this configurable or extensible
+	archiveTypes := []string{"zip", "rar", "7z", "tar", "gz", "bz2"}
+	fileTypes := make([]string, len(t.FileTypes)+len(archiveTypes))
+	copy(fileTypes, t.FileTypes)
+	copy(fileTypes[len(t.FileTypes):], archiveTypes)
+	return fileTypes
 }
