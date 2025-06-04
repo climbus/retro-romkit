@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"tosec-manager/internal/tree"
+	"github.com/climbus/retro-romkit/internal/tree"
 )
 
 const REGEX_MAIN_DATA = `^(.*?) \((.*?)\)\((.*?)\).*\.(.*)$`

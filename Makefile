@@ -1,8 +1,7 @@
 build:
-	go build -o bin/tosec-manager ./cmd/cli/main.go
+	go build -o bin/romkit ./cmd/cli/main.go
 
 run: build
-	./bin/tosec-manager
-
+	romkit
 test:
 	go test -v ./...

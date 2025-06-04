@@ -3,7 +3,7 @@ package tree
 import (
 	"reflect"
 	"testing"
-	"tosec-manager/testutils"
+	"github.com/climbus/retro-romkit/testutils"
 )
 
 func TestWalk(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	"os"
 	"slices"
 
-	"tosec-manager/pkg/tosec"
+	"github.com/climbus/retro-romkit/pkg/tosec"
 )
 
 func printUsage() {

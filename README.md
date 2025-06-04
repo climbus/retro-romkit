@@ -1,4 +1,4 @@
-# tosec-manager
+# retro-romkit
 
 A CLI tool for managing and analyzing TOSEC file collections.
 
@@ -11,7 +11,7 @@ make build
 ## Usage
 
 ```bash
-tosec-manager <command> [<args>]
+romkit <command> [<args>]
 ```
 
 ### Commands
@@ -24,10 +24,10 @@ tosec-manager <command> [<args>]
 
 ```bash
 # Display file tree
-tosec-manager show /path/to/directory
+romkit show /path/to/directory
 
 # Show file statistics
-tosec-manager stats /path/to/directory
+romkit stats /path/to/directory
 ```
 
 ## Build
