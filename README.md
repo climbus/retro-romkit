@@ -1,12 +1,32 @@
-# retro-romkit
+# 🎮 The RetroRomkit
 
-A CLI tool for managing and analyzing TOSEC file collections.
+**Prepare your ROMset. Rule your retro.**
 
-## Installation
+The RetroRomkit is a smart, lightweight toolkit for organizing, renaming, and structuring TOSEC-based ROM sets.  
+Whether you're managing thousands of disk images for Amiga, Commodore 64, Atari ST, or other classic platforms — this tool helps you bring order to chaos.
 
-```bash
-make build
-```
+---
+
+## ✨ Features
+
+- 🗂 **Parse TOSEC-style filenames**
+- 🧠 **Extract metadata** (title, year, publisher, language, etc.)
+- 📁 **Generate custom folder structures**
+  - Sort by platform, letter, publisher, or custom rules
+  - Split ROMs into folders of N files
+- 🧪 **Preview mode** (dry-run) before applying changes
+- 🔄 **Reversible** (no destructive operations)
+- 🎯 Designed for **multi-platform** collections
+
+---
+
+## 🧰 Example Use Cases
+
+- Prepare a clean, emulator-ready ROMset for MiSTer or RetroArch
+- Organize your collection by platform, then by title
+- Build subsets from full TOSEC dumps
+
+---
 
 ## Usage
 
