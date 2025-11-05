@@ -1,6 +1,7 @@
 package tosec
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -132,6 +133,153 @@ func TestTosec_GetStats(t *testing.T) {
 				t.Errorf("GetStats() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestGetFiles(t *testing.T) {
+	tmpDir := testutils.CreateTempDir(t)
+	defer os.RemoveAll(tmpDir)
+
+	testFiles := []string{
+		"Game One (1990)(Publisher A).zip",
+		"Game Two (1991)(Publisher B)(Europe)(en).zip",
+		"Game Three (1992)(Publisher C)[a].zip",
+		"InvalidFileName.txt",
+		"subdir/Game Four (1993)(Publisher D).zip",
+	}
+
+	testutils.CreateTestFiles(t, testFiles, tmpDir)
+
+	tests := []struct {
+		name          string
+		platform      string
+		expectedCount int
+		wantErr       bool
+	}{
+		{
+			name:          "Get all files without platform filter",
+			platform:      "",
+			expectedCount: 4, // 4 valid TOSEC files, 1 invalid
+			wantErr:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tosecFolder := Create(tmpDir, tt.platform)
+			files, err := tosecFolder.GetFiles()
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetFiles() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if len(files) != tt.expectedCount {
+				t.Errorf("GetFiles() got %d files, want %d", len(files), tt.expectedCount)
+			}
+
+			// Verify parsed files have correct structure
+			for _, file := range files {
+				if file.Title == "" {
+					t.Errorf("File has empty title: %+v", file)
+				}
+				if file.Date == "" {
+					t.Errorf("File has empty date: %+v", file)
+				}
+				if file.Publisher == "" {
+					t.Errorf("File has empty publisher: %+v", file)
+				}
+			}
+		})
+	}
+}
+
+func TestFormatTree(t *testing.T) {
+	tmpDir := testutils.CreateTempDir(t)
+	defer os.RemoveAll(tmpDir)
+
+	testFiles := []string{
+		"file1.zip",
+		"file2.zip",
+		"subdir/file3.zip",
+		"subdir/nested/file4.zip",
+	}
+
+	testutils.CreateTestFiles(t, testFiles, tmpDir)
+
+	tests := []struct {
+		name         string
+		platform     string
+		expectFiles  []string
+		expectHeader bool
+	}{
+		{
+			name:         "Format tree with all files",
+			platform:     "",
+			expectFiles:  []string{"file1.zip", "file2.zip", "subdir/", "file3.zip", "subdir/nested/", "file4.zip"},
+			expectHeader: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tosecFolder := Create(tmpDir, tt.platform)
+			lines := tosecFolder.FormatTree()
+
+			var foundLines []string
+			for line := range lines {
+				foundLines = append(foundLines, line)
+			}
+
+			if len(foundLines) == 0 {
+				t.Error("FormatTree() returned no lines")
+			}
+
+			// Check if header is present
+			if tt.expectHeader {
+				if len(foundLines) == 0 || !reflect.DeepEqual(foundLines[0], fmt.Sprintf("Showing file tree for: %s", tmpDir)) {
+					t.Errorf("FormatTree() missing or incorrect header, got: %v", foundLines[0])
+				}
+			}
+
+			// Verify some expected files are present in output
+			output := ""
+			for _, line := range foundLines {
+				output += line + "\n"
+			}
+
+			for _, expectedFile := range tt.expectFiles {
+				found := false
+				for _, line := range foundLines {
+					if reflect.DeepEqual(line, expectedFile) || reflect.DeepEqual(line, "  "+expectedFile) || reflect.DeepEqual(line, "    "+expectedFile) {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Logf("Full output:\n%s", output)
+					t.Errorf("FormatTree() missing expected file: %s", expectedFile)
+				}
+			}
+		})
+	}
+}
+
+func TestFormatTreeError(t *testing.T) {
+	tosecFolder := Create("/non/existent/path", "")
+	lines := tosecFolder.FormatTree()
+
+	var foundLines []string
+	var hasError bool
+	for line := range lines {
+		foundLines = append(foundLines, line)
+		if len(line) >= 5 && line[:5] == "Error" {
+			hasError = true
+		}
+	}
+
+	if !hasError {
+		t.Errorf("FormatTree() should return error line for non-existent path, got: %v", foundLines)
 	}
 }
 
