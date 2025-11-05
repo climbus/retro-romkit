@@ -22,6 +22,12 @@ Available commands:
     help		Show this help message`)
 }
 
+func parsePlatformFlag() string {
+	platform := flag.StringP("platform", "p", "", "Platform to filter by (optional)")
+	flag.Parse()
+	return *platform
+}
+
 func main() {
 	if len(os.Args) == 1 {
 		printUsage()
@@ -31,11 +37,9 @@ func main() {
 	switch os.Args[1] {
 	case "show":
 		path := getPath()
+		platform := parsePlatformFlag()
 
-		platform := flag.StringP("platform", "p", "", "Platform to filter by (optional)")
-		flag.Parse()
-
-		tosecFolder := tosec.Create(path, *platform)
+		tosecFolder := tosec.Create(path, platform)
 
 		lines := tosecFolder.FormatTree()
 		for line := range lines {
@@ -43,11 +47,9 @@ func main() {
 		}
 	case "stats":
 		path := getPath()
+		platform := parsePlatformFlag()
 
-		platform := flag.StringP("platform", "p", "", "Platform to filter by (optional)")
-		flag.Parse()
-
-		tosecFolder := tosec.Create(path, *platform)
+		tosecFolder := tosec.Create(path, platform)
 
 		stats, err := tosecFolder.GetStats()
 
