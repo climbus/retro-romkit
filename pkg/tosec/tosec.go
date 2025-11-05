@@ -4,6 +4,7 @@ package tosec
 import (
 	"errors"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
@@ -48,6 +49,11 @@ type TosecFile struct {
 type Stats struct {
 	TotalFiles      int
 	DirectoryCounts map[string]int
+}
+
+type ParseError struct {
+	FileName string
+	Error    error
 }
 
 // ParseFileName parses a file name according to the TOSEC naming convention
@@ -128,15 +134,21 @@ func (tosecFolder *TosecFolder) GetFileTree() (<-chan tree.Entry, <-chan error) 
 }
 
 // GetFiles returns a slice of TosecFile objects parsed from the file names in the folder
+// Note: Returns successfully parsed files even if some files fail to parse.
+// Parse errors are logged to stderr but don't stop processing.
 func (t *TosecFolder) GetFiles() ([]TosecFile, error) {
 	entries, errCh := t.GetFileTree()
 	var fileList []TosecFile
+	var parseErrors []ParseError
 
 	for entry := range entries {
 		if !entry.IsDir {
 			tf, err := ParseFileName(entry.Name)
 			if err != nil {
-				fmt.Println("error parsing file name: " + entry.Name + " Error: " + err.Error())
+				parseErrors = append(parseErrors, ParseError{
+					FileName: entry.Name,
+					Error:    err,
+				})
 				continue
 			}
 			fileList = append(fileList, *tf)
@@ -146,6 +158,14 @@ func (t *TosecFolder) GetFiles() ([]TosecFile, error) {
 	// Wait for error channel to close and check for errors
 	if err := <-errCh; err != nil {
 		return nil, err
+	}
+
+	// Log parse errors to stderr if any occurred
+	if len(parseErrors) > 0 {
+		fmt.Fprintf(os.Stderr, "Warning: Failed to parse %d file(s):\n", len(parseErrors))
+		for _, pe := range parseErrors {
+			fmt.Fprintf(os.Stderr, "  - %s: %v\n", pe.FileName, pe.Error)
+		}
 	}
 
 	return fileList, nil
