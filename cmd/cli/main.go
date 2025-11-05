@@ -117,7 +117,3 @@ func getPath() string {
 
 	return path
 }
-
-type Options struct {
-	Platform string
-}
