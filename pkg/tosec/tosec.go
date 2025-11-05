@@ -50,6 +50,11 @@ type Stats struct {
 	DirectoryCounts map[string]int
 }
 
+type CopyOptions struct {
+	Limit int
+	Unzip bool
+}
+
 // ParseFileName parses a file name according to the TOSEC naming convention
 func ParseFileName(fileName string) (*TosecFile, error) {
 
@@ -207,6 +212,22 @@ func (t *TosecFolder) GetStats() (Stats, error) {
 	}
 
 	return stats, nil
+}
+
+func (tf *TosecFolder) BuildTree(options CopyOptions) []tree.Entry {
+	entries := make([]tree.Entry, 0)
+
+	files, err := tf.GetFiles()
+
+	if err != nil {
+		fmt.Println("Error retrieving files:", err)
+	}
+
+	for _, file := range files {
+		fmt.Printf("Processing file: %s (%s) - %s - r:%s l:%s : %s\n", file.Title, file.Date, file.Publisher, file.Region, file.Language, file.FileName)
+	}
+
+	return entries
 }
 
 func (tf *TosecFile) extractRestPartOfName() string {

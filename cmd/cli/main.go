@@ -17,6 +17,8 @@ Available commands:
 
     show <path>		Show file tree of the specified path
     stats <path>	Show statistics about files in the specified path
+	list <path>		List all files in the specified path
+	copy <path>		Copy files from the specified path to the output direcotry
     help		Show this help message`)
 }
 
@@ -69,6 +71,17 @@ func main() {
 		for _, file := range files {
 			fmt.Printf("%s (%s) - %s - r:%s l:%s : %s\n", file.Title, file.Date, file.Publisher, file.Region, file.Language, file.FileName)
 		}
+	case "copy":
+		path := getPath()
+		tosecFolder := tosec.Create(path, "")
+
+		// outputDir := flag.StringP("output", "o", "", "Output directory to copy files to")
+		limit := flag.IntP("limit", "l", 0, "Limit the number of files per direcotry")
+		unzip := flag.BoolP("unzip", "u", false, "Unzip files before copying")
+		flag.Parse()
+
+		tosecFolder.BuildTree(tosec.CopyOptions{Limit: *limit, Unzip: *unzip})
+
 	case "help":
 		printUsage()
 	default:
