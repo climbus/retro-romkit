@@ -84,6 +84,24 @@ func getPath() string {
 		os.Exit(1)
 	}
 	path := os.Args[2]
+
+	// Validate that the path exists
+	info, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Printf("Error: Path '%s' does not exist.\n", path)
+		} else {
+			fmt.Printf("Error: Cannot access path '%s': %v\n", path, err)
+		}
+		os.Exit(1)
+	}
+
+	// Validate that the path is a directory
+	if !info.IsDir() {
+		fmt.Printf("Error: Path '%s' is not a directory.\n", path)
+		os.Exit(1)
+	}
+
 	return path
 }
 
