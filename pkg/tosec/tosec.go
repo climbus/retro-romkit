@@ -4,6 +4,7 @@ package tosec
 import (
 	"errors"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
@@ -20,11 +21,11 @@ const LANGUAGE_NAMES = `(en|fr|de|es|it|ja|zh|ko|pt|ru|nl|pl|sv|no|da|fi|tr|ar|h
 
 // Pre-compiled regular expressions for performance
 var (
-	reMainData  = regexp.MustCompile(REGEX_MAIN_DATA)
-	reFlags     = regexp.MustCompile(REGEX_FLAG)
-	reOptions   = regexp.MustCompile(REGEX_OPTION)
-	reRegion    = regexp.MustCompile(REGEX_REGION)
-	reLanguage  = regexp.MustCompile(REGEX_LANGUAGE)
+	reMainData = regexp.MustCompile(REGEX_MAIN_DATA)
+	reFlags    = regexp.MustCompile(REGEX_FLAG)
+	reOptions  = regexp.MustCompile(REGEX_OPTION)
+	reRegion   = regexp.MustCompile(REGEX_REGION)
+	reLanguage = regexp.MustCompile(REGEX_LANGUAGE)
 )
 
 type TosecFolder struct {
@@ -53,6 +54,10 @@ type Stats struct {
 type CopyOptions struct {
 	Limit int
 	Unzip bool
+}
+type ParseError struct {
+	FileName string
+	Error    error
 }
 
 // ParseFileName parses a file name according to the TOSEC naming convention
@@ -133,15 +138,21 @@ func (tosecFolder *TosecFolder) GetFileTree() (<-chan tree.Entry, <-chan error) 
 }
 
 // GetFiles returns a slice of TosecFile objects parsed from the file names in the folder
+// Note: Returns successfully parsed files even if some files fail to parse.
+// Parse errors are logged to stderr but don't stop processing.
 func (t *TosecFolder) GetFiles() ([]TosecFile, error) {
 	entries, errCh := t.GetFileTree()
 	var fileList []TosecFile
+	var parseErrors []ParseError
 
 	for entry := range entries {
 		if !entry.IsDir {
 			tf, err := ParseFileName(entry.Name)
 			if err != nil {
-				fmt.Println("error parsing file name: " + entry.Name + " Error: " + err.Error())
+				parseErrors = append(parseErrors, ParseError{
+					FileName: entry.Name,
+					Error:    err,
+				})
 				continue
 			}
 			fileList = append(fileList, *tf)
@@ -151,6 +162,14 @@ func (t *TosecFolder) GetFiles() ([]TosecFile, error) {
 	// Wait for error channel to close and check for errors
 	if err := <-errCh; err != nil {
 		return nil, err
+	}
+
+	// Log parse errors to stderr if any occurred
+	if len(parseErrors) > 0 {
+		fmt.Fprintf(os.Stderr, "Warning: Failed to parse %d file(s):\n", len(parseErrors))
+		for _, pe := range parseErrors {
+			fmt.Fprintf(os.Stderr, "  - %s: %v\n", pe.FileName, pe.Error)
+		}
 	}
 
 	return fileList, nil
