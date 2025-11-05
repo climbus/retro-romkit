@@ -18,6 +18,15 @@ const REGEX_LANGUAGE = `^` + LANGUAGE_NAMES + `(-` + LANGUAGE_NAMES + `)?$`
 const REGEX_REGION = `(Japan|USA|Europe|World|International|Asia|Australia|Brazil|China|Korea|Taiwan)`
 const LANGUAGE_NAMES = `(en|fr|de|es|it|ja|zh|ko|pt|ru|nl|pl|sv|no|da|fi|tr|ar|he|hi|th|vi|id|ms|cs|hu|ro|bg|el|uk|hr|sk|sl|lt|lv|et|fa|ur)`
 
+// Pre-compiled regular expressions for performance
+var (
+	reMainData  = regexp.MustCompile(REGEX_MAIN_DATA)
+	reFlags     = regexp.MustCompile(REGEX_FLAG)
+	reOptions   = regexp.MustCompile(REGEX_OPTION)
+	reRegion    = regexp.MustCompile(REGEX_REGION)
+	reLanguage  = regexp.MustCompile(REGEX_LANGUAGE)
+)
+
 type TosecFolder struct {
 	Path      string
 	Platform  string
@@ -44,12 +53,7 @@ type Stats struct {
 // ParseFileName parses a file name according to the TOSEC naming convention
 func ParseFileName(fileName string) (*TosecFile, error) {
 
-	// TODO: Move compiled regex to package level variable
-	re := regexp.MustCompile(REGEX_MAIN_DATA)
-	re_flags := regexp.MustCompile(REGEX_FLAG)
-	re_options := regexp.MustCompile(REGEX_OPTION)
-
-	matches := re.FindStringSubmatch(fileName)
+	matches := reMainData.FindStringSubmatch(fileName)
 	if matches == nil {
 		return nil, errors.New("invalid file name format")
 	}
@@ -63,18 +67,18 @@ func ParseFileName(fileName string) (*TosecFile, error) {
 
 	rest := tf.extractRestPartOfName()
 
-	flags_res := re_flags.FindAllStringSubmatch(rest, -1)
+	flags_res := reFlags.FindAllStringSubmatch(rest, -1)
 	flags := extractValues(flags_res)
 	tf.Flags = flags
 
-	options_res := re_options.FindAllStringSubmatch(rest, -1)
+	options_res := reOptions.FindAllStringSubmatch(rest, -1)
 	options := extractValues(options_res)
 
 	for _, opt := range options {
 		opt = strings.TrimSpace(opt)
-		if tf.Region == "" && regexp.MustCompile(REGEX_REGION).MatchString(opt) {
+		if tf.Region == "" && reRegion.MatchString(opt) {
 			tf.Region = opt
-		} else if tf.Language == "" && regexp.MustCompile(REGEX_LANGUAGE).MatchString(opt) {
+		} else if tf.Language == "" && reLanguage.MatchString(opt) {
 			tf.Language = opt
 		}
 	}
@@ -139,13 +143,9 @@ func (t *TosecFolder) GetFiles() ([]TosecFile, error) {
 		}
 	}
 
-	// Check for errors after processing entries
-	// TODO: Check if it's necessary to wait for the error channel
-	select {
-	case err := <-errCh:
-		if err != nil {
-			return nil, err
-		}
+	// Wait for error channel to close and check for errors
+	if err := <-errCh; err != nil {
+		return nil, err
 	}
 
 	return fileList, nil
@@ -170,12 +170,9 @@ func (t *TosecFolder) FormatTree() <-chan string {
 			lines <- depthLabel + name
 		}
 
-		// Check for errors after processing entries
-		select {
-		case err := <-errCh:
-			if err != nil {
-				lines <- fmt.Sprintf("Error: %v", err)
-			}
+		// Wait for error channel to close and check for errors
+		if err := <-errCh; err != nil {
+			lines <- fmt.Sprintf("Error: %v", err)
 		}
 	}()
 
@@ -204,12 +201,9 @@ func (t *TosecFolder) GetStats() (Stats, error) {
 		}
 	}
 
-	// Check for errors after processing entries
-	select {
-	case err := <-errCh:
-		if err != nil {
-			return stats, err
-		}
+	// Wait for error channel to close and check for errors
+	if err := <-errCh; err != nil {
+		return stats, err
 	}
 
 	return stats, nil
@@ -218,7 +212,21 @@ func (t *TosecFolder) GetStats() (Stats, error) {
 func (tf *TosecFile) extractRestPartOfName() string {
 	publisherStr := fmt.Sprintf("(%s)", tf.Publisher)
 	idx := strings.LastIndex(tf.FileName, publisherStr)
-	rest := tf.FileName[idx+len(publisherStr) : len(tf.FileName)-len(tf.Format)-1]
+
+	// Validate indices to prevent panic
+	if idx == -1 {
+		return ""
+	}
+
+	startIdx := idx + len(publisherStr)
+	endIdx := len(tf.FileName) - len(tf.Format) - 1
+
+	// Ensure valid slice bounds
+	if startIdx >= endIdx || endIdx > len(tf.FileName) {
+		return ""
+	}
+
+	rest := tf.FileName[startIdx:endIdx]
 	return rest
 }
 
