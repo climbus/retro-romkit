@@ -86,7 +86,3 @@ func getPath() string {
 	path := os.Args[2]
 	return path
 }
-
-type Options struct {
-	Platform string
-}
