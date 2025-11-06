@@ -2,21 +2,61 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
+  release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    outputs:
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Install semantic-release
+        run: |
+          npm install -g \
+            semantic-release \
+            @semantic-release/changelog \
+            @semantic-release/git \
+            @semantic-release/github \
+            @semantic-release/exec \
+            conventional-changelog-conventionalcommits
+
+      - name: Semantic Release
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
+
   build:
-    name: Build and Release
+    name: Build and Upload Assets
+    needs: release
+    if: needs.release.outputs.new_release_published == 'true'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Set up Go
@@ -24,52 +64,54 @@ jobs:
         with:
           go-version: '1.24'
 
-      - name: Get version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
       - name: Run tests
         run: go test -v ./...
 
       - name: Build binaries
+        env:
+          VERSION: ${{ needs.release.outputs.new_release_version }}
         run: |
+          mkdir -p bin
+
           # Linux amd64
-          GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \
+          GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.version=${VERSION}" \
             -o bin/romkit-linux-amd64 ./cmd/cli/main.go
 
           # Linux arm64
-          GOOS=linux GOARCH=arm64 go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \
+          GOOS=linux GOARCH=arm64 go build -ldflags="-s -w -X main.version=${VERSION}" \
             -o bin/romkit-linux-arm64 ./cmd/cli/main.go
 
           # macOS amd64
-          GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w -X main.version=${VERSION}" \
             -o bin/romkit-darwin-amd64 ./cmd/cli/main.go
 
           # macOS arm64 (Apple Silicon)
-          GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \
+          GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w -X main.version=${VERSION}" \
             -o bin/romkit-darwin-arm64 ./cmd/cli/main.go
 
           # Windows amd64
-          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X main.version=${VERSION}" \
             -o bin/romkit-windows-amd64.exe ./cmd/cli/main.go
 
           # Windows arm64
-          GOOS=windows GOARCH=arm64 go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \
+          GOOS=windows GOARCH=arm64 go build -ldflags="-s -w -X main.version=${VERSION}" \
             -o bin/romkit-windows-arm64.exe ./cmd/cli/main.go
 
       - name: Create archives
+        env:
+          VERSION: ${{ needs.release.outputs.new_release_version }}
         run: |
           cd bin
 
           # Create tar.gz for Linux/macOS
-          tar -czf romkit-${{ steps.version.outputs.VERSION }}-linux-amd64.tar.gz romkit-linux-amd64
-          tar -czf romkit-${{ steps.version.outputs.VERSION }}-linux-arm64.tar.gz romkit-linux-arm64
-          tar -czf romkit-${{ steps.version.outputs.VERSION }}-darwin-amd64.tar.gz romkit-darwin-amd64
-          tar -czf romkit-${{ steps.version.outputs.VERSION }}-darwin-arm64.tar.gz romkit-darwin-arm64
+          tar -czf romkit-${VERSION}-linux-amd64.tar.gz romkit-linux-amd64
+          tar -czf romkit-${VERSION}-linux-arm64.tar.gz romkit-linux-arm64
+          tar -czf romkit-${VERSION}-darwin-amd64.tar.gz romkit-darwin-amd64
+          tar -czf romkit-${VERSION}-darwin-arm64.tar.gz romkit-darwin-arm64
 
           # Create zip for Windows
-          zip romkit-${{ steps.version.outputs.VERSION }}-windows-amd64.zip romkit-windows-amd64.exe
-          zip romkit-${{ steps.version.outputs.VERSION }}-windows-arm64.zip romkit-windows-arm64.exe
+          zip romkit-${VERSION}-windows-amd64.zip romkit-windows-amd64.exe
+          zip romkit-${VERSION}-windows-arm64.zip romkit-windows-arm64.exe
 
       - name: Generate checksums
         run: |
@@ -77,34 +119,9 @@ jobs:
           sha256sum *.tar.gz *.zip > checksums.txt
           cat checksums.txt
 
-      - name: Generate changelog
-        id: changelog
-        run: |
-          # Get previous tag
-          PREV_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
-
-          if [ -z "$PREV_TAG" ]; then
-            # First release - get all commits
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
-          else
-            # Get commits since previous tag
-            CHANGELOG=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
-          fi
-
-          # Save to file for release notes
-          echo "$CHANGELOG" > CHANGELOG.txt
-          echo "Generated changelog from ${PREV_TAG:-initial commit} to HEAD"
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: Release v${{ steps.version.outputs.VERSION }}
-          body_path: CHANGELOG.txt
-          files: |
-            bin/*.tar.gz
-            bin/*.zip
-            bin/checksums.txt
-          draft: false
-          prerelease: false
+      - name: Upload Release Assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.release.outputs.new_release_version }}
+        run: |
+          gh release upload "v${VERSION}" bin/*.tar.gz bin/*.zip bin/checksums.txt

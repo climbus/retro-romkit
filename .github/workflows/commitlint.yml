@@ -1,0 +1,127 @@
+name: Commitlint
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  commitlint:
+    name: Validate Commit Messages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Install commitlint
+        run: |
+          npm install -g @commitlint/cli @commitlint/config-conventional
+
+      - name: Validate PR commits
+        run: |
+          # Get all commits in PR
+          git fetch origin ${{ github.base_ref }}
+          COMMITS=$(git rev-list origin/${{ github.base_ref }}..HEAD)
+
+          echo "Validating commits in PR..."
+          FAILED=0
+
+          for COMMIT in $COMMITS; do
+            echo ""
+            echo "Checking commit: $COMMIT"
+            MESSAGE=$(git log --format=%B -n 1 $COMMIT)
+            echo "Message: $MESSAGE"
+
+            if echo "$MESSAGE" | npx commitlint --config commitlint.config.js; then
+              echo "✅ Valid"
+            else
+              echo "❌ Invalid"
+              FAILED=1
+            fi
+          done
+
+          if [ $FAILED -eq 1 ]; then
+            echo ""
+            echo "❌ Some commits do not follow Conventional Commits format!"
+            echo ""
+            echo "Please use one of these formats:"
+            echo "  feat: add new feature"
+            echo "  fix: resolve bug"
+            echo "  docs: update documentation"
+            echo "  style: format code"
+            echo "  refactor: restructure code"
+            echo "  perf: improve performance"
+            echo "  test: add tests"
+            echo "  build: update build system"
+            echo "  ci: update CI configuration"
+            echo "  chore: other changes"
+            echo ""
+            echo "For breaking changes, add 'BREAKING CHANGE:' in commit body or use '!' after type:"
+            echo "  feat!: breaking feature"
+            echo ""
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ All commits follow Conventional Commits format!"
+
+      - name: Add comment with validation result
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ❌ Commit Message Validation Failed
+
+One or more commits in this PR do not follow the [Conventional Commits](https://www.conventionalcommits.org/) format.
+
+### Required Format
+
+\`\`\`
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+\`\`\`
+
+### Types
+- **feat**: New feature (triggers minor version bump)
+- **fix**: Bug fix (triggers patch version bump)
+- **docs**: Documentation only changes
+- **style**: Code style changes (formatting, etc.)
+- **refactor**: Code refactoring (triggers patch version bump)
+- **perf**: Performance improvements (triggers patch version bump)
+- **test**: Adding or updating tests
+- **build**: Build system changes
+- **ci**: CI configuration changes
+- **chore**: Other changes
+
+### Breaking Changes
+For breaking changes, add \`BREAKING CHANGE:\` in the footer or use \`!\` after the type:
+- \`feat!: breaking change\` (triggers major version bump)
+- \`fix!: breaking fix\` (triggers major version bump)
+
+### Examples
+\`\`\`
+feat: add user authentication
+fix: resolve memory leak in parser
+docs: update README with new examples
+refactor: simplify error handling logic
+feat!: change API response format
+
+BREAKING CHANGE: API now returns JSON instead of XML
+\`\`\`
+
+Please update your commit messages and force-push to this branch.`
+            })
