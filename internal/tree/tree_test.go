@@ -1,9 +1,9 @@
 package tree
 
 import (
+	"github.com/climbus/retro-romkit/testutils"
 	"reflect"
 	"testing"
-	"github.com/climbus/retro-romkit/testutils"
 )
 
 func TestWalk(t *testing.T) {
