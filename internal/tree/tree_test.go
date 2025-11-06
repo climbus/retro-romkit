@@ -88,9 +88,5 @@ func TestWalk(t *testing.T) {
 		if err == nil {
 			t.Error("Expected error for non-existent directory")
 		}
-
-		// Drain channel
-		for range entries {
-		}
 	})
 }

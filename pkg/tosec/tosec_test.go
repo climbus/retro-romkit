@@ -287,13 +287,13 @@ func TestParseFileName(t *testing.T) {
 	tests := []struct {
 		name     string
 		fileName string
-		want     *TosecFile
+		want     *File
 		wantErr  bool
 	}{
 		{
 			"Test standad filename",
 			"Zynaps (1987)(Hewson Consultants).zip",
-			&TosecFile{
+			&File{
 				FileName:  "Zynaps (1987)(Hewson Consultants).zip",
 				Title:     "Zynaps",
 				Date:      "1987",
@@ -308,7 +308,7 @@ func TestParseFileName(t *testing.T) {
 		{
 			"Test filename with region and language",
 			"Zynaps (1987)(Hewson Consultants)(Europe)(en).zip",
-			&TosecFile{
+			&File{
 				FileName:  "Zynaps (1987)(Hewson Consultants)(Europe)(en).zip",
 				Title:     "Zynaps",
 				Date:      "1987",
@@ -323,7 +323,7 @@ func TestParseFileName(t *testing.T) {
 		{
 			"Test filename with flags",
 			"Zynaps (1987)(Hewson Consultants)[a][Aka kota].zip",
-			&TosecFile{
+			&File{
 				FileName:  "Zynaps (1987)(Hewson Consultants)[a][Aka kota].zip",
 				Title:     "Zynaps",
 				Date:      "1987",

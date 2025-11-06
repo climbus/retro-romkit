@@ -11,30 +11,30 @@ import (
 	"github.com/climbus/retro-romkit/internal/tree"
 )
 
-const REGEX_MAIN_DATA = `^(.*?) \((.*?)\)\((.*?)\).*\.(.*)$`
-const REGEX_FLAG = `\[(.*?)\]`
-const REGEX_OPTION = `\((.*?)\)`
-const REGEX_LANGUAGE = `^` + LANGUAGE_NAMES + `(-` + LANGUAGE_NAMES + `)?$`
+const regexMainData = `^(.*?) \((.*?)\)\((.*?)\).*\.(.*)$`
+const regexFlag = `\[(.*?)\]`
+const regexOption = `\((.*?)\)`
+const languageNames = `(en|fr|de|es|it|ja|zh|ko|pt|ru|nl|pl|sv|no|da|fi|tr|ar|he|hi|th|vi|id|ms|cs|hu|ro|bg|el|uk|hr|sk|sl|lt|lv|et|fa|ur)`
+const regexLanguage = `^` + languageNames + `(-` + languageNames + `)?$`
 
-const REGEX_REGION = `(Japan|USA|Europe|World|International|Asia|Australia|Brazil|China|Korea|Taiwan)`
-const LANGUAGE_NAMES = `(en|fr|de|es|it|ja|zh|ko|pt|ru|nl|pl|sv|no|da|fi|tr|ar|he|hi|th|vi|id|ms|cs|hu|ro|bg|el|uk|hr|sk|sl|lt|lv|et|fa|ur)`
+const regexRegion = `(Japan|USA|Europe|World|International|Asia|Australia|Brazil|China|Korea|Taiwan)`
 
 // Pre-compiled regular expressions for performance
 var (
-	reMainData = regexp.MustCompile(REGEX_MAIN_DATA)
-	reFlags    = regexp.MustCompile(REGEX_FLAG)
-	reOptions  = regexp.MustCompile(REGEX_OPTION)
-	reRegion   = regexp.MustCompile(REGEX_REGION)
-	reLanguage = regexp.MustCompile(REGEX_LANGUAGE)
+	reMainData = regexp.MustCompile(regexMainData)
+	reFlags    = regexp.MustCompile(regexFlag)
+	reOptions  = regexp.MustCompile(regexOption)
+	reRegion   = regexp.MustCompile(regexRegion)
+	reLanguage = regexp.MustCompile(regexLanguage)
 )
 
-type TosecFolder struct {
+type Folder struct {
 	Path      string
 	Platform  string
 	FileTypes []string
 }
 
-type TosecFile struct {
+type File struct {
 	FileName  string
 	Title     string
 	Date      string
@@ -61,13 +61,13 @@ type ParseError struct {
 }
 
 // ParseFileName parses a file name according to the TOSEC naming convention
-func ParseFileName(fileName string) (*TosecFile, error) {
+func ParseFileName(fileName string) (*File, error) {
 
 	matches := reMainData.FindStringSubmatch(fileName)
 	if matches == nil {
 		return nil, errors.New("invalid file name format")
 	}
-	tf := &TosecFile{
+	tf := &File{
 		FileName:  fileName,
 		Title:     strings.TrimSpace(matches[1]),
 		Date:      strings.TrimSpace(matches[2]),
@@ -77,12 +77,12 @@ func ParseFileName(fileName string) (*TosecFile, error) {
 
 	rest := tf.extractRestPartOfName()
 
-	flags_res := reFlags.FindAllStringSubmatch(rest, -1)
-	flags := extractValues(flags_res)
+	flagsRes := reFlags.FindAllStringSubmatch(rest, -1)
+	flags := extractValues(flagsRes)
 	tf.Flags = flags
 
-	options_res := reOptions.FindAllStringSubmatch(rest, -1)
-	options := extractValues(options_res)
+	optionsRes := reOptions.FindAllStringSubmatch(rest, -1)
+	options := extractValues(optionsRes)
 
 	for _, opt := range options {
 		opt = strings.TrimSpace(opt)
@@ -98,8 +98,8 @@ func ParseFileName(fileName string) (*TosecFile, error) {
 	return tf, nil
 }
 
-// Create initializes a TosecFolder with the given path and platform.
-func Create(path, platform string) *TosecFolder {
+// Create initializes a Folder with the given path and platform.
+func Create(path, platform string) *Folder {
 
 	// TODO: Move platform list to a package-level variable or config
 	platforms := map[string][]string{
@@ -115,7 +115,7 @@ func Create(path, platform string) *TosecFolder {
 		"golang":  {"go"},
 	}
 
-	return &TosecFolder{
+	return &Folder{
 		Path:      path,
 		Platform:  platform,
 		FileTypes: platforms[platform],
@@ -123,7 +123,7 @@ func Create(path, platform string) *TosecFolder {
 }
 
 // GetFileTree returns a channel of tree entries for the given path
-func (tosecFolder *TosecFolder) GetFileTree() (<-chan tree.Entry, <-chan error) {
+func (tosecFolder *Folder) GetFileTree() (<-chan tree.Entry, <-chan error) {
 	entries := make(chan tree.Entry, 100)
 	errCh := make(chan error, 1)
 
@@ -137,12 +137,12 @@ func (tosecFolder *TosecFolder) GetFileTree() (<-chan tree.Entry, <-chan error) 
 	return entries, errCh
 }
 
-// GetFiles returns a slice of TosecFile objects parsed from the file names in the folder
+// GetFiles returns a slice of File objects parsed from the file names in the folder
 // Note: Returns successfully parsed files even if some files fail to parse.
 // Parse errors are logged to stderr but don't stop processing.
-func (t *TosecFolder) GetFiles() ([]TosecFile, error) {
-	entries, errCh := t.GetFileTree()
-	var fileList []TosecFile
+func (tosecFolder *Folder) GetFiles() ([]File, error) {
+	entries, errCh := tosecFolder.GetFileTree()
+	var fileList []File
 	var parseErrors []ParseError
 
 	for entry := range entries {
@@ -176,15 +176,15 @@ func (t *TosecFolder) GetFiles() ([]TosecFile, error) {
 }
 
 // FormatTree returns a channel of formatted text lines for the tree
-func (t *TosecFolder) FormatTree() <-chan string {
+func (tosecFolder *Folder) FormatTree() <-chan string {
 	lines := make(chan string, 100)
 
 	go func() {
 		defer close(lines)
 
-		lines <- fmt.Sprintf("Showing file tree for: %s", t.Path)
+		lines <- fmt.Sprintf("Showing file tree for: %s", tosecFolder.Path)
 
-		entries, errCh := t.GetFileTree()
+		entries, errCh := tosecFolder.GetFileTree()
 		for entry := range entries {
 			depthLabel := strings.Repeat("  ", entry.Depth)
 			name := entry.Name
@@ -204,14 +204,14 @@ func (t *TosecFolder) FormatTree() <-chan string {
 }
 
 // GetStats returns statistics about the files in the given path
-func (t *TosecFolder) GetStats() (Stats, error) {
+func (tosecFolder *Folder) GetStats() (Stats, error) {
 	stats := Stats{
 		TotalFiles:      0,
 		DirectoryCounts: make(map[string]int),
 	}
 	stats.DirectoryCounts["/"] = 0 // Initialize root directory count
 
-	entries, errCh := t.GetFileTree()
+	entries, errCh := tosecFolder.GetFileTree()
 	for entry := range entries {
 		if entry.IsDir {
 			stats.DirectoryCounts[entry.Name] = 0
@@ -233,10 +233,10 @@ func (t *TosecFolder) GetStats() (Stats, error) {
 	return stats, nil
 }
 
-func (tf *TosecFolder) BuildTree(options CopyOptions) []tree.Entry {
+func (tosecFolder *Folder) BuildTree(_ CopyOptions) []tree.Entry {
 	entries := make([]tree.Entry, 0)
 
-	files, err := tf.GetFiles()
+	files, err := tosecFolder.GetFiles()
 
 	if err != nil {
 		fmt.Println("Error retrieving files:", err)
@@ -249,7 +249,7 @@ func (tf *TosecFolder) BuildTree(options CopyOptions) []tree.Entry {
 	return entries
 }
 
-func (tf *TosecFile) extractRestPartOfName() string {
+func (tf *File) extractRestPartOfName() string {
 	publisherStr := fmt.Sprintf("(%s)", tf.Publisher)
 	idx := strings.LastIndex(tf.FileName, publisherStr)
 
@@ -272,23 +272,21 @@ func (tf *TosecFile) extractRestPartOfName() string {
 
 func extractValues(elements [][]string) []string {
 	values := make([]string, 0)
-	if elements != nil {
-		for _, val := range elements {
-			values = append(values, strings.TrimSpace(val[1]))
-		}
+	for _, val := range elements {
+		values = append(values, strings.TrimSpace(val[1]))
 	}
 	return values
 }
 
-func (t *TosecFolder) fileTypesWithArchives() []string {
-	if len(t.FileTypes) == 0 {
-		return t.FileTypes
+func (tosecFolder *Folder) fileTypesWithArchives() []string {
+	if len(tosecFolder.FileTypes) == 0 {
+		return tosecFolder.FileTypes
 	}
 	// Add common archive formats to the file types
 	// TODO: Consider making this configurable or extensible
 	archiveTypes := []string{"zip", "rar", "7z", "tar", "gz", "bz2"}
-	fileTypes := make([]string, len(t.FileTypes)+len(archiveTypes))
-	copy(fileTypes, t.FileTypes)
-	copy(fileTypes[len(t.FileTypes):], archiveTypes)
+	fileTypes := make([]string, len(tosecFolder.FileTypes)+len(archiveTypes))
+	copy(fileTypes, tosecFolder.FileTypes)
+	copy(fileTypes[len(tosecFolder.FileTypes):], archiveTypes)
 	return fileTypes
 }
