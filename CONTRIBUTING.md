@@ -117,11 +117,9 @@ Your PR will be automatically checked for:
 ### 7. Merge to Main
 
 After approval and merge:
-- Semantic-release automatically analyzes your commits
-- Creates new version based on commit types
-- Generates CHANGELOG entry
-- Creates GitHub release
-- Builds and uploads binaries
+- Your changes are now in the main branch
+- **Note:** No automatic release is created yet
+- You or a maintainer will decide when to trigger a release using `make release`
 
 ## 🧪 Testing
 
@@ -185,15 +183,30 @@ Before submitting a PR:
 - [ ] Commit messages follow Conventional Commits
 - [ ] Documentation updated if needed
 
-## 🔄 Version Bumps
+## 🚀 Creating Releases (For Maintainers)
 
-You don't need to manually update versions! The system automatically determines version bumps based on your commit types:
+When you're ready to create a new release:
+
+### Preview Release
+```bash
+make release-dry-run
+```
+This shows what version would be created without actually creating it.
+
+### Trigger Release
+```bash
+make release
+```
+
+The system automatically determines version bumps based on commits since last release:
 
 | Commit Type | Version Change | Example |
 |-------------|----------------|---------|
 | `fix:` | Patch (0.0.X) | 1.2.3 → 1.2.4 |
 | `feat:` | Minor (0.X.0) | 1.2.3 → 1.3.0 |
 | `feat!:` or `BREAKING CHANGE:` | Major (X.0.0) | 1.2.3 → 2.0.0 |
+
+**Note:** Only commits with `feat:`, `fix:`, `perf:`, or `refactor:` trigger releases. Commits with `docs:`, `test:`, `chore:`, etc. don't create new versions.
 
 ## 📄 License
 

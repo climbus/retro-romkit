@@ -4,24 +4,24 @@
 
 This project uses GitHub Actions for continuous integration and automated releases with **semantic versioning** based on **Conventional Commits**. The CI/CD pipeline automatically analyzes commits, determines version bumps, generates changelogs, builds binaries, and creates releases.
 
-## 🤖 Automated Release Process
+## 🤖 Semi-Automated Release Process
 
 ### How It Works
 
 1. **Developer commits** using Conventional Commits format
 2. **CI validates** commit messages in pull requests
-3. **On merge to main**, semantic-release:
-   - Analyzes commit messages
+3. **Developer triggers release** when ready (using `make release`)
+4. **Semantic-release analyzes** commits since last release:
    - Determines version bump (major/minor/patch)
    - Generates CHANGELOG.md
    - Creates git tag
    - Creates GitHub release
-4. **Build job** compiles binaries for all platforms
-5. **Assets uploaded** to GitHub release
+5. **Build job** compiles binaries for all platforms
+6. **Assets uploaded** to GitHub release
 
-### No Manual Tagging Required! 🎉
+### Controlled Releases 🎯
 
-Version numbers and tags are created automatically based on your commit messages.
+Version numbers and tags are created automatically based on your commit messages, but **YOU decide when to release**. Not every push creates a new version!
 
 ## 📝 Conventional Commits
 
@@ -145,7 +145,7 @@ add feature
 
 ### 3. Release Workflow (`.github/workflows/release.yml`)
 
-**Trigger:** Push to `main` branch (automatic after PR merge)
+**Trigger:** Manual (workflow_dispatch) - triggered by `make release` command or GitHub UI
 
 **Process:**
 
@@ -174,37 +174,86 @@ add feature
 
 ## Creating a Release
 
-### The New Way (Automatic) ✨
+### Step-by-Step Process ✨
 
-1. **Write code with conventional commits:**
-   ```bash
-   git add .
-   git commit -m "feat: add new awesome feature"
-   git push origin your-branch
-   ```
+#### 1. Develop with Conventional Commits
 
-2. **Create PR and merge to main:**
-   - Commitlint validates your messages
-   - CI runs tests
-   - Merge PR
+Write code and commit using the proper format:
+```bash
+git add .
+git commit -m "feat: add new awesome feature"
+git push origin your-branch
+```
 
-3. **Automatic release happens:**
-   - Semantic-release analyzes commits
-   - Version determined automatically
-   - CHANGELOG generated
-   - Tag created
-   - Release published
-   - Binaries built and uploaded
+#### 2. Create PR and Merge
 
-### The Old Way (Manual - Still Works)
+- Commitlint validates your messages
+- CI runs tests
+- Get approval and merge to main
 
-You can still manually create tags if needed:
+#### 3. Decide When to Release
+
+**Key Point:** Merging to main does NOT automatically create a release. You decide when!
+
+**Preview what will be released:**
+```bash
+make release-dry-run
+```
+
+This shows what version would be created based on commits since last release.
+
+#### 4. Trigger the Release
+
+When you're ready to publish:
+
+**Option A: Using Makefile (recommended)**
+```bash
+make release
+```
+
+**Option B: Using GitHub CLI**
+```bash
+gh workflow run release.yml
+```
+
+**Option C: Using GitHub UI**
+1. Go to "Actions" tab
+2. Select "Release" workflow
+3. Click "Run workflow"
+4. Click "Run workflow" button
+
+#### 5. Automated Process Runs
+
+Once triggered:
+- ✅ Semantic-release analyzes all commits since last release
+- ✅ Determines version bump automatically
+- ✅ Generates CHANGELOG.md
+- ✅ Creates git tag (e.g., v1.4.0)
+- ✅ Creates GitHub release with notes
+- ✅ Builds binaries for all platforms
+- ✅ Uploads assets to release
+
+### Testing Before Release
+
+**Dry Run:** See what would happen without actually releasing:
+```bash
+make release-dry-run
+```
+
+Then check the workflow logs to see what version would be created.
+
+### Manual Tag Approach (Alternative)
+
+If you prefer traditional manual tagging:
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-But semantic versioning is recommended! 🚀
+But the `make release` approach is recommended because it:
+- ✅ Generates proper CHANGELOG
+- ✅ Follows semantic versioning automatically
+- ✅ Maintains version consistency
 
 ## Version Numbering
 
@@ -302,9 +351,13 @@ Every push and pull request runs:
 
 ### Release Not Created
 
-**Problem:** Pushed to main but no release created
-- **Reason:** No commits that trigger a release (e.g., only `docs:`, `chore:`, etc.)
-- **Solution:** Commits must use `feat:`, `fix:`, `perf:`, or `refactor:` to trigger releases
+**Problem:** Ran `make release` but no release was created
+- **Reason 1:** No commits since last release that trigger a version bump (e.g., only `docs:`, `chore:`, etc.)
+- **Reason 2:** Commits don't follow Conventional Commits format properly
+- **Solution:**
+  - Run `make release-dry-run` to see what semantic-release would do
+  - Ensure commits use `feat:`, `fix:`, `perf:`, or `refactor:` to trigger releases
+  - Check workflow logs in GitHub Actions for details
 
 ### Commitlint Fails in PR
 
@@ -375,10 +428,20 @@ git commit -m "docs: document export command usage"
 # Push and create PR
 git push origin feat/add-export-command
 
-# After PR approval and merge to main:
-# → Semantic-release analyzes commits
+# After PR approval, merge to main
+# Main branch now has your commits, but NO release yet
+
+# When ready to release (could be after multiple merged PRs):
+
+# 1. Preview what will be released
+make release-dry-run
+
+# 2. If looks good, trigger the release
+make release
+
+# → Semantic-release analyzes ALL commits since last release
 # → Sees "feat:" commit → Minor version bump (e.g., 1.2.0 → 1.3.0)
-# → Generates changelog entry
+# → Generates changelog entry from ALL new commits
 # → Creates tag v1.3.0
 # → Creates GitHub release
 # → Builds and uploads binaries
