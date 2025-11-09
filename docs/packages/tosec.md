@@ -25,7 +25,7 @@ Package tosec provides functionality for analyzing and displaying file trees and
 
 
 <a name="CopyOptions"></a>
-## type [CopyOptions](<https://github.com/climbus/retro-romkit/blob/main/pkg/tosec/tosec.go#L55-L58>)
+## type CopyOptions
 
 
 
@@ -37,7 +37,7 @@ type CopyOptions struct {
 ```
 
 <a name="File"></a>
-## type [File](<https://github.com/climbus/retro-romkit/blob/main/pkg/tosec/tosec.go#L38-L48>)
+## type File
 
 
 
@@ -56,7 +56,7 @@ type File struct {
 ```
 
 <a name="ParseFileName"></a>
-### func [ParseFileName](<https://github.com/climbus/retro-romkit/blob/main/pkg/tosec/tosec.go#L65>)
+### func ParseFileName
 
 ```go
 func ParseFileName(fileName string) (*File, error)
@@ -65,7 +65,7 @@ func ParseFileName(fileName string) (*File, error)
 ParseFileName parses a file name according to the TOSEC naming convention
 
 <a name="Folder"></a>
-## type [Folder](<https://github.com/climbus/retro-romkit/blob/main/pkg/tosec/tosec.go#L32-L36>)
+## type Folder
 
 
 
@@ -78,7 +78,7 @@ type Folder struct {
 ```
 
 <a name="Create"></a>
-### func [Create](<https://github.com/climbus/retro-romkit/blob/main/pkg/tosec/tosec.go#L103>)
+### func Create
 
 ```go
 func Create(path, platform string) *Folder
@@ -87,7 +87,7 @@ func Create(path, platform string) *Folder
 Create initializes a Folder with the given path and platform.
 
 <a name="Folder.BuildTree"></a>
-### func \(\*Folder\) [BuildTree](<https://github.com/climbus/retro-romkit/blob/main/pkg/tosec/tosec.go#L236>)
+### func \(\*Folder\) BuildTree
 
 ```go
 func (tosecFolder *Folder) BuildTree(_ CopyOptions) []tree.Entry
@@ -96,7 +96,7 @@ func (tosecFolder *Folder) BuildTree(_ CopyOptions) []tree.Entry
 
 
 <a name="Folder.FormatTree"></a>
-### func \(\*Folder\) [FormatTree](<https://github.com/climbus/retro-romkit/blob/main/pkg/tosec/tosec.go#L180>)
+### func \(\*Folder\) FormatTree
 
 ```go
 func (tosecFolder *Folder) FormatTree() <-chan string
@@ -105,7 +105,7 @@ func (tosecFolder *Folder) FormatTree() <-chan string
 FormatTree returns a channel of formatted text lines for the tree
 
 <a name="Folder.GetFileTree"></a>
-### func \(\*Folder\) [GetFileTree](<https://github.com/climbus/retro-romkit/blob/main/pkg/tosec/tosec.go#L127>)
+### func \(\*Folder\) GetFileTree
 
 ```go
 func (tosecFolder *Folder) GetFileTree() (<-chan tree.Entry, <-chan error)
@@ -114,7 +114,7 @@ func (tosecFolder *Folder) GetFileTree() (<-chan tree.Entry, <-chan error)
 GetFileTree returns a channel of tree entries for the given path
 
 <a name="Folder.GetFiles"></a>
-### func \(\*Folder\) [GetFiles](<https://github.com/climbus/retro-romkit/blob/main/pkg/tosec/tosec.go#L144>)
+### func \(\*Folder\) GetFiles
 
 ```go
 func (tosecFolder *Folder) GetFiles() ([]File, error)
@@ -123,7 +123,7 @@ func (tosecFolder *Folder) GetFiles() ([]File, error)
 GetFiles returns a slice of File objects parsed from the file names in the folder Note: Returns successfully parsed files even if some files fail to parse. Parse errors are logged to stderr but don't stop processing.
 
 <a name="Folder.GetStats"></a>
-### func \(\*Folder\) [GetStats](<https://github.com/climbus/retro-romkit/blob/main/pkg/tosec/tosec.go#L208>)
+### func \(\*Folder\) GetStats
 
 ```go
 func (tosecFolder *Folder) GetStats() (Stats, error)
@@ -132,7 +132,7 @@ func (tosecFolder *Folder) GetStats() (Stats, error)
 GetStats returns statistics about the files in the given path
 
 <a name="ParseError"></a>
-## type [ParseError](<https://github.com/climbus/retro-romkit/blob/main/pkg/tosec/tosec.go#L59-L62>)
+## type ParseError
 
 
 
@@ -144,7 +144,7 @@ type ParseError struct {
 ```
 
 <a name="Stats"></a>
-## type [Stats](<https://github.com/climbus/retro-romkit/blob/main/pkg/tosec/tosec.go#L50-L53>)
+## type Stats
 
 
 

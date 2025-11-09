@@ -15,7 +15,7 @@ Package tree provides directory traversal functionality with filtering capabilit
 
 
 <a name="Walk"></a>
-## func [Walk](<https://github.com/climbus/retro-romkit/blob/main/internal/tree/tree.go#L31>)
+## func Walk
 
 ```go
 func Walk(path string, filetypes []string, entries chan<- Entry) error
@@ -24,7 +24,7 @@ func Walk(path string, filetypes []string, entries chan<- Entry) error
 Walk traverses the directory tree and sends entries to the provided channel
 
 <a name="Entry"></a>
-## type [Entry](<https://github.com/climbus/retro-romkit/blob/main/internal/tree/tree.go#L11-L16>)
+## type Entry
 
 Entry represents a single tree entry
 
