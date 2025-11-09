@@ -10,19 +10,71 @@ Package tosec provides functionality for analyzing and displaying file trees and
 
 ## Index
 
+- [Variables](<#variables>)
+- [func GetPlatformNames\(\) \[\]string](<#GetPlatformNames>)
 - [type CopyOptions](<#CopyOptions>)
 - [type File](<#File>)
   - [func ParseFileName\(fileName string\) \(\*File, error\)](<#ParseFileName>)
 - [type Folder](<#Folder>)
-  - [func Create\(path, platform string\) \*Folder](<#Create>)
+  - [func Create\(path, platformName string\) \*Folder](<#Create>)
   - [func \(tosecFolder \*Folder\) BuildTree\(\_ CopyOptions\) \[\]tree.Entry](<#Folder.BuildTree>)
   - [func \(tosecFolder \*Folder\) FormatTree\(\) \<\-chan string](<#Folder.FormatTree>)
   - [func \(tosecFolder \*Folder\) GetFileTree\(\) \(\<\-chan tree.Entry, \<\-chan error\)](<#Folder.GetFileTree>)
   - [func \(tosecFolder \*Folder\) GetFiles\(\) \(\[\]File, error\)](<#Folder.GetFiles>)
   - [func \(tosecFolder \*Folder\) GetStats\(\) \(Stats, error\)](<#Folder.GetStats>)
 - [type ParseError](<#ParseError>)
+- [type Platform](<#Platform>)
+  - [func GetPlatform\(name string\) \(Platform, bool\)](<#GetPlatform>)
 - [type Stats](<#Stats>)
 
+
+## Variables
+
+<a name="Platforms"></a>
+
+```go
+var Platforms = map[string]Platform{
+    "nes": {
+        Name:        "nes",
+        Description: "Nintendo Entertainment System",
+        FileTypes:   []string{".nes", ".fds"},
+    },
+    "snes": {
+        Name:        "snes",
+        Description: "Super Nintendo Entertainment System",
+        FileTypes:   []string{".smc", ".sfc", ".fig"},
+    },
+    "genesis": {
+        Name:        "genesis",
+        Description: "Sega Genesis / Mega Drive",
+        FileTypes:   []string{".gen", ".md", ".smd", ".bin"},
+    },
+    "gameboy": {
+        Name:        "gameboy",
+        Description: "Nintendo Game Boy",
+        FileTypes:   []string{".gb", ".gbc", ".gba"},
+    },
+    "atari2600": {
+        Name:        "atari2600",
+        Description: "Atari 2600",
+        FileTypes:   []string{".a26", ".bin"},
+    },
+    "c64": {
+        Name:        "c64",
+        Description: "Commodore 64",
+        FileTypes:   []string{".d64", ".t64", ".prg", ".crt"},
+    },
+}
+```
+
+<a name="GetPlatformNames"></a>
+## func GetPlatformNames
+
+```go
+func GetPlatformNames() []string
+```
+
+GetPlatformNames returns a sorted list of all platform names.
 
 <a name="CopyOptions"></a>
 ## type CopyOptions
@@ -81,7 +133,7 @@ type Folder struct {
 ### func Create
 
 ```go
-func Create(path, platform string) *Folder
+func Create(path, platformName string) *Folder
 ```
 
 Create initializes a Folder with the given path and platform.
@@ -142,6 +194,28 @@ type ParseError struct {
     Error    error
 }
 ```
+
+<a name="Platform"></a>
+## type Platform
+
+
+
+```go
+type Platform struct {
+    Name        string
+    Description string
+    FileTypes   []string
+}
+```
+
+<a name="GetPlatform"></a>
+### func GetPlatform
+
+```go
+func GetPlatform(name string) (Platform, bool)
+```
+
+GetPlatform retrieves a Platform by its name.
 
 <a name="Stats"></a>
 ## type Stats
