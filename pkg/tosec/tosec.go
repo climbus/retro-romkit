@@ -18,6 +18,7 @@ const languageNames = `(en|fr|de|es|it|ja|zh|ko|pt|ru|nl|pl|sv|no|da|fi|tr|ar|he
 const regexLanguage = `^` + languageNames + `(-` + languageNames + `)?$`
 
 const regexRegion = `(Japan|USA|Europe|World|International|Asia|Australia|Brazil|China|Korea|Taiwan)`
+const rootDir = "/"
 
 // Pre-compiled regular expressions for performance
 var (
@@ -209,7 +210,7 @@ func (tosecFolder *Folder) GetStats() (Stats, error) {
 		TotalFiles:      0,
 		DirectoryCounts: make(map[string]int),
 	}
-	stats.DirectoryCounts["/"] = 0 // Initialize root directory count
+	stats.DirectoryCounts[rootDir] = 0
 
 	entries, errCh := tosecFolder.GetFileTree()
 	for entry := range entries {
@@ -220,12 +221,11 @@ func (tosecFolder *Folder) GetStats() (Stats, error) {
 			if entry.Depth > 0 {
 				stats.DirectoryCounts[entry.Folder]++
 			} else {
-				stats.DirectoryCounts["/"]++ // Root directory
+				stats.DirectoryCounts[rootDir]++
 			}
 		}
 	}
 
-	// Wait for error channel to close and check for errors
 	if err := <-errCh; err != nil {
 		return stats, err
 	}
