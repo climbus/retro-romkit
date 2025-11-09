@@ -63,7 +63,7 @@ func main() {
 		}
 	case "list":
 		path := getPath()
-		tosecFolder := tosec.Create(path, "")
+		tosecFolder := tosec.Create(path, "c64")
 
 		files, err := tosecFolder.GetFiles()
 		if err != nil {
