@@ -81,7 +81,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## ❌ Commit Message Validation Failed
+              body: | ## ❌ Commit Message Validation Failed
 
 One or more commits in this PR do not follow the [Conventional Commits](https://www.conventionalcommits.org/) format.
 
@@ -123,5 +123,4 @@ feat!: change API response format
 BREAKING CHANGE: API now returns JSON instead of XML
 \`\`\`
 
-Please update your commit messages and force-push to this branch.`
-            })
+Please update your commit messages and force-push to this branch.
