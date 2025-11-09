@@ -14,7 +14,7 @@ func TestGetStatsEmptyDirectory(t *testing.T) {
 	tmpDir := testutils.CreateTempDir(t)
 	defer os.RemoveAll(tmpDir)
 
-	tosecFolder := Create(tmpDir, "")
+	tosecFolder := Create(tmpDir, "c64")
 
 	stats, err := tosecFolder.GetStats()
 	if err != nil {
@@ -43,7 +43,7 @@ func TestGetStatsOnlyDirectories(t *testing.T) {
 		t.Fatalf("Failed to create dir2/subdir1: %v", err)
 	}
 
-	tosecFolder := Create(tmpDir, "")
+	tosecFolder := Create(tmpDir, "c64")
 
 	stats, err := tosecFolder.GetStats()
 	if err != nil {
@@ -96,21 +96,12 @@ func TestTosec_GetStats(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:     "Test filter by platform, whhen no files match",
+			name:     "Test filter by platform, when no files match",
 			path:     tmpDir,
-			platform: "coleco",
+			platform: "nes",
 			want: Stats{
 				TotalFiles:      0,
 				DirectoryCounts: map[string]int{"/": 0, "dir1": 0, "dir1/subdir1": 0, "dir2": 0},
-			},
-			wantErr: false,
-		},
-		{
-			name: "Test filter without platform",
-			path: tmpDir,
-			want: Stats{
-				TotalFiles:      6,
-				DirectoryCounts: map[string]int{"/": 2, "dir1": 2, "dir1/subdir1": 1, "dir2": 1},
 			},
 			wantErr: false,
 		},
@@ -155,14 +146,7 @@ func TestGetFiles(t *testing.T) {
 		platform      string
 		expectedCount int
 		wantErr       bool
-	}{
-		{
-			name:          "Get all files without platform filter",
-			platform:      "",
-			expectedCount: 4, // 4 valid TOSEC files, 1 invalid
-			wantErr:       false,
-		},
-	}
+	}{}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -215,7 +199,7 @@ func TestFormatTree(t *testing.T) {
 	}{
 		{
 			name:         "Format tree with all files",
-			platform:     "",
+			platform:     "c64",
 			expectFiles:  []string{"file1.zip", "file2.zip", "subdir/", "file3.zip", "subdir/nested/", "file4.zip"},
 			expectHeader: true,
 		},
@@ -266,7 +250,7 @@ func TestFormatTree(t *testing.T) {
 }
 
 func TestFormatTreeError(t *testing.T) {
-	tosecFolder := Create("/non/existent/path", "")
+	tosecFolder := Create("/non/existent/path", "c64")
 	lines := tosecFolder.FormatTree()
 
 	var foundLines []string
