@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.2](https://github.com/climbus/retro-romkit/compare/v0.1.1...v0.1.2) (2025-11-09)
+
+### 🐛 Bug Fixes
+
+* add write permissions for docs workflow ([abf643b](https://github.com/climbus/retro-romkit/commit/abf643ba72bc7951bff8b66a18667045a1adacdc))
+* fixed help formatting ([caf27d4](https://github.com/climbus/retro-romkit/commit/caf27d4f78e3f558671d1fb37da7fa9e30438780))
+
+### 📝 Documentation
+
+* update generated documentation [skip ci] ([56a01cc](https://github.com/climbus/retro-romkit/commit/56a01cc6dcb38606e0401ca49f3efa1723357304))
+
 ## [0.1.1](https://github.com/climbus/retro-romkit/compare/v0.1.0...v0.1.1) (2025-11-09)
 
 ### 🐛 Bug Fixes
