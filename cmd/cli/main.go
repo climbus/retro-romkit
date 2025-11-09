@@ -75,7 +75,8 @@ func main() {
 		}
 	case "copy":
 		path := getPath()
-		tosecFolder := tosec.Create(path, "")
+		platform := parsePlatformFlag()
+		tosecFolder := tosec.Create(path, platform)
 
 		// outputDir := flag.StringP("output", "o", "", "Output directory to copy files to")
 		limit := flag.IntP("limit", "l", 0, "Limit the number of files per directory")

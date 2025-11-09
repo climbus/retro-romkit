@@ -20,7 +20,6 @@ const regexLanguage = `^` + languageNames + `(-` + languageNames + `)?$`
 const regexRegion = `(Japan|USA|Europe|World|International|Asia|Australia|Brazil|China|Korea|Taiwan)`
 const rootDir = "/"
 
-// Pre-compiled regular expressions for performance
 var (
 	reMainData = regexp.MustCompile(regexMainData)
 	reFlags    = regexp.MustCompile(regexFlag)
@@ -100,26 +99,24 @@ func ParseFileName(fileName string) (*File, error) {
 }
 
 // Create initializes a Folder with the given path and platform.
-func Create(path, platform string) *Folder {
+func Create(path, platformName string) *Folder {
 
-	// TODO: Move platform list to a package-level variable or config
-	platforms := map[string][]string{
-		"amiga":   {"adf", "dms", "ipf", "lha", "lzx"},
-		"atari":   {"st", "msa", "zip"},
-		"c64":     {"d64", "t64", "prg", "crt"},
-		"nes":     {"nes", "unif"},
-		"gameboy": {"gb", "gbc", "gba"},
-		"sega":    {"md", "smd", "gen", "bin"},
-		"pc":      {"exe", "com", "bat", "zip", "rar"},
-		"psx":     {"iso", "bin", "cue"},
-		"coleco":  {"col", "rom"},
-		"golang":  {"go"},
+	platform, err := GetPlatform(platformName)
+
+	if err {
+		errorMsg := fmt.Sprintf("Unknown platform '%s'. No file type filtering will be applied.\nSupported platforms %s\n", platformName, strings.Join(GetPlatformNames(), ", "))
+		fmt.Fprint(os.Stderr, errorMsg)
+
+		os.Exit(1)
 	}
+
+	fmt.Print("Platform Name: ")
+	fmt.Println(platformName)
 
 	return &Folder{
 		Path:      path,
-		Platform:  platform,
-		FileTypes: platforms[platform],
+		Platform:  platformName,
+		FileTypes: platform.FileTypes,
 	}
 }
 
