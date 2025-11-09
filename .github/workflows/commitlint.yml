@@ -81,46 +81,47 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: | ## ❌ Commit Message Validation Failed
+              body: |
+                ## ❌ Commit Message Validation Failed
 
-One or more commits in this PR do not follow the [Conventional Commits](https://www.conventionalcommits.org/) format.
+                One or more commits in this PR do not follow the [Conventional Commits](https://www.conventionalcommits.org/) format.
 
-### Required Format
+                ### Required Format
 
-\`\`\`
-<type>(<scope>): <subject>
+                \`\`\`
+                <type>(<scope>): <subject>
 
-<body>
+                <body>
 
-<footer>
-\`\`\`
+                <footer>
+                \`\`\`
 
-### Types
-- **feat**: New feature (triggers minor version bump)
-- **fix**: Bug fix (triggers patch version bump)
-- **docs**: Documentation only changes
-- **style**: Code style changes (formatting, etc.)
-- **refactor**: Code refactoring (triggers patch version bump)
-- **perf**: Performance improvements (triggers patch version bump)
-- **test**: Adding or updating tests
-- **build**: Build system changes
-- **ci**: CI configuration changes
-- **chore**: Other changes
+                ### Types
+                - **feat**: New feature (triggers minor version bump)
+                - **fix**: Bug fix (triggers patch version bump)
+                - **docs**: Documentation only changes
+                - **style**: Code style changes (formatting, etc.)
+                - **refactor**: Code refactoring (triggers patch version bump)
+                - **perf**: Performance improvements (triggers patch version bump)
+                - **test**: Adding or updating tests
+                - **build**: Build system changes
+                - **ci**: CI configuration changes
+                - **chore**: Other changes
 
-### Breaking Changes
-For breaking changes, add \`BREAKING CHANGE:\` in the footer or use \`!\` after the type:
-- \`feat!: breaking change\` (triggers major version bump)
-- \`fix!: breaking fix\` (triggers major version bump)
+                ### Breaking Changes
+                For breaking changes, add \`BREAKING CHANGE:\` in the footer or use \`!\` after the type:
+                - \`feat!: breaking change\` (triggers major version bump)
+                - \`fix!: breaking fix\` (triggers major version bump)
 
-### Examples
-\`\`\`
-feat: add user authentication
-fix: resolve memory leak in parser
-docs: update README with new examples
-refactor: simplify error handling logic
-feat!: change API response format
+                ### Examples
+                \`\`\`
+                feat: add user authentication
+                fix: resolve memory leak in parser
+                docs: update README with new examples
+                refactor: simplify error handling logic
+                feat!: change API response format
 
-BREAKING CHANGE: API now returns JSON instead of XML
-\`\`\`
+                BREAKING CHANGE: API now returns JSON instead of XML
+                \`\`\`
 
-Please update your commit messages and force-push to this branch.
+                Please update your commit messages and force-push to this branch.
