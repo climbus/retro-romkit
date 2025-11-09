@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.1](https://github.com/climbus/retro-romkit/compare/v0.1.0...v0.1.1) (2025-11-09)
+
+### 🐛 Bug Fixes
+
+* fixed help formatting ([02f0cb8](https://github.com/climbus/retro-romkit/commit/02f0cb83b4656a027cff0c3694e2198f5338c2e4))
+
+### 📝 Documentation
+
+* add automated package documentation generation ([735b918](https://github.com/climbus/retro-romkit/commit/735b918378b19f10a358b65bbec2c295cade195f))
+
+### ♻️ Code Refactoring
+
+* extracted root dir const and removed comments ([d900a58](https://github.com/climbus/retro-romkit/commit/d900a580595aeb0929bdcc912f5d02ed584437d3))
+
 ## 0.1.0 (2025-11-06)
 
 ### ⚠ BREAKING CHANGES
