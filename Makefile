@@ -1,4 +1,4 @@
-.PHONY: build test clean run install build-all release help
+.PHONY: build test clean run install build-all release help docs
 
 # Build variables
 BINARY_NAME=romkit
@@ -87,6 +87,18 @@ lint: fmt vet
 		echo "golangci-lint not installed. Install it from https://golangci-lint.run/usage/install/"; \
 	fi
 
+# Generate documentation
+docs:
+	@echo "Generating documentation..."
+	@if ! command -v gomarkdoc >/dev/null 2>&1; then \
+		echo "Installing gomarkdoc..."; \
+		go install github.com/princjef/gomarkdoc/cmd/gomarkdoc@latest; \
+	fi
+	@mkdir -p docs/packages
+	@gomarkdoc ./pkg/tosec > docs/packages/tosec.md
+	@gomarkdoc ./internal/tree > docs/packages/tree.md
+	@echo "Documentation generated in docs/"
+
 # Create release archives locally (for testing)
 build-archives: build-all
 	@echo "Creating release archives..."
@@ -154,6 +166,9 @@ help:
 	@echo "  fmt            - Format Go code"
 	@echo "  vet            - Run go vet"
 	@echo "  lint           - Run all linters"
+	@echo ""
+	@echo "Documentation Commands:"
+	@echo "  docs           - Generate package documentation (Markdown)"
 	@echo ""
 	@echo "Release Commands:"
 	@echo "  release        - Trigger automated release workflow (requires gh CLI)"

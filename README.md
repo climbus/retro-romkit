@@ -50,6 +50,21 @@ romkit show /path/to/directory
 romkit stats /path/to/directory
 ```
 
+## 📚 Documentation
+
+Package documentation is available in the [docs/](docs/) directory:
+
+- [tosec](docs/packages/tosec.md) - Core functionality for TOSEC ROM analysis
+- [tree](docs/packages/tree.md) - Directory traversal utilities
+
+To regenerate the documentation from source code:
+
+```bash
+make docs
+```
+
+Documentation is automatically updated on every push to main branch.
+
 ## Build
 
 ```bash

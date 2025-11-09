@@ -73,3 +73,45 @@ jobs:
         with:
           version: v2.2.0
           args: --timeout=5m
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Install gomarkdoc
+        run: go install github.com/princjef/gomarkdoc/cmd/gomarkdoc@latest
+
+      - name: Generate documentation
+        run: make docs
+
+      - name: Check for documentation changes
+        id: check_changes
+        run: |
+          if git diff --quiet docs/; then
+            echo "No changes in documentation"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Documentation has changes"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit documentation changes
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add docs/
+          git commit -m "docs: update generated documentation [skip ci]"
+          git push

@@ -1,0 +1,55 @@
+<svg width="170" height="125" viewBox="0 0 170 125" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    /* Możesz usunąć ten blok <style> jeśli czcionka 'Press Start 2P' 
+       będzie osadzona inaczej lub jeśli tekst zostanie przekonwertowany na krzywe.
+       Dla najlepszej kompatybilności, jeśli SVG ma być używane w różnych miejscach,
+       zaleca się konwersję tekstu na ścieżki w edytorze grafiki wektorowej. */
+    .pixel-text-main {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      fill: #39FF14; /* Neon Green */
+      text-anchor: start;
+    }
+    .pixel-text-the {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      fill: #39FF14; /* Neon Green */
+      text-anchor: start;
+    }
+    .crisp {
+      shape-rendering: crispEdges; /* Kluczowe dla wyglądu pixel art */
+    }
+  </style>
+
+  <g id="logo-group" transform="translate(5,5)">
+
+    <!-- Folder - część tylna -->
+    <rect x="10" y="25" width="130" height="80" fill="#402A40" class="crisp" /> <!-- Ciemniejszy fiolet (#402A40) -->
+    <!-- Folder - zakładka -->
+    <rect x="18" y="15" width="45" height="10" fill="#402A40" class="crisp" />
+
+    <!-- Dyskietka (Floppy Disk) -->
+    <g id="floppy-disk" transform="translate(85, 10)"> <!-- Pozycja: wystaje z prawego górnego rogu folderu -->
+      <!-- Korpus dyskietki -->
+      <rect x="0" y="0" width="55" height="55" fill="#606060" class="crisp" /> <!-- Ciemnoszary (#606060) -->
+      <!-- Metalowa zasuwka dyskietki -->
+      <rect x="3" y="22" width="49" height="28" fill="#A0A0A0" class="crisp" /> <!-- Średni szary (#A0A0A0) -->
+      <!-- Detal zasuwki (miejsce na przesunięcie) -->
+      <rect x="22" y="3" width="11" height="15" fill="#C0C0C0" class="crisp" /> <!-- Jasnoszary (#C0C0C0) -->
+      <!-- Etykieta dyskietki -->
+      <rect x="3" y="3" width="49" height="15" fill="#E9E9E9" class="crisp" /> <!-- Bardzo jasnoszary/białawy (#E9E9E9) -->
+      <!-- Pikselowe "linie" na etykiecie (symulacja tekstu) -->
+      <rect x="6" y="6" width="43" height="2" fill="#606060" class="crisp"/>
+      <rect x="6" y="10" width="38" height="2" fill="#606060" class="crisp"/>
+    </g>
+
+    <!-- Folder - część przednia -->
+    <!-- Zakrywa dolną część dyskietki, jeśli ta by tam sięgała -->
+    <rect x="10" y="35" width="130" height="70" fill="#583858" class="crisp" /> <!-- Główny fiolet, nieco jaśniejszy (#583858) -->
+
+    <!-- Tekst na przedniej części folderu -->
+    <text x="18" y="66" class="pixel-text-the">The</text>
+    <text x="18" y="82" class="pixel-text-main">RetroRomkit</text>
+
+  </g>
+</svg>
