@@ -15,11 +15,13 @@ func printUsage() {
 
 Available commands:
 
-    show <path>		Show file tree of the specified path
-    stats <path>	Show statistics about files in the specified path
+	show <path>		Show file tree of the specified path
+	stats <path>		Show statistics about files in the specified path
 	list <path>		List all files in the specified path
 	copy <path>		Copy files from the specified path to the output directory
-    help		Show this help message`)
+	help			Show this help message
+
+`)
 }
 
 func parsePlatformFlag() string {
